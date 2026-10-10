@@ -2,8 +2,8 @@ import { lazy, type ReactNode } from 'react';
 import { createBrowserRouter, Outlet } from 'react-router';
 
 import { RequireAuth } from '@/features/auth/components/require-auth';
-import { AuthCallbackPage } from '@/features/auth/pages/auth-callback-page';
 import { LoginPage } from '@/features/auth/pages/login-page';
+import { SignupPage } from '@/features/auth/pages/signup-page';
 import { RequirePermission } from '@/features/tenancy/components/require-permission';
 import { SelectBusinessPage } from '@/features/tenancy/pages/select-business-page';
 import { TenantProvider } from '@/features/tenancy/tenant-context';
@@ -41,7 +41,7 @@ const guard = (permission: Permission, page: ReactNode) => (
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
-  { path: '/auth/callback', element: <AuthCallbackPage /> },
+  { path: '/signup', element: <SignupPage /> },
   {
     element: (
       <RequireAuth>

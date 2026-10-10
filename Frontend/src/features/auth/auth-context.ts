@@ -1,12 +1,12 @@
 import { createContext, useContext } from 'react';
 
-import type { AuthStatus, AuthUser } from './types';
+import type { AuthStatus, AuthUser, LoginCredentials } from './types';
 
 export interface AuthContextValue {
   status: AuthStatus;
   user: AuthUser | null;
-  /** Starts sign-in, then returns the user to the in-app path `returnTo`. */
-  login: (returnTo?: string) => Promise<void>;
+  /** Checks the username and password with the API and starts a session. Rejects on failure. */
+  login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
   getAccessToken: () => Promise<string | null>;
 }

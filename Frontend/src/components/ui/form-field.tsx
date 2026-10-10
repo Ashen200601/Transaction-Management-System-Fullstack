@@ -15,11 +15,13 @@ interface FormFieldProps {
   error?: string;
   hint?: string;
   className?: string;
+  /** Shown at the end of the label row, e.g. a "Forgot password?" link. */
+  labelAction?: ReactNode;
   /** Renders the control, wired to the label, hint and error. */
   children: (control: FieldControlProps) => ReactNode;
 }
 
-export function FormField({ label, error, hint, className, children }: FormFieldProps) {
+export function FormField({ label, error, hint, className, labelAction, children }: FormFieldProps) {
   const id = useId();
   const hintId = `${id}-hint`;
   const errorId = `${id}-error`;
@@ -27,7 +29,14 @@ export function FormField({ label, error, hint, className, children }: FormField
 
   return (
     <div className={cn('grid gap-1.5', className)}>
-      <Label htmlFor={id}>{label}</Label>
+      {labelAction ? (
+        <div className="flex items-baseline justify-between gap-2">
+          <Label htmlFor={id}>{label}</Label>
+          {labelAction}
+        </div>
+      ) : (
+        <Label htmlFor={id}>{label}</Label>
+      )}
       {children({ id, 'aria-invalid': error ? true : undefined, 'aria-describedby': describedBy || undefined })}
       {hint && !error && (
         <p id={hintId} className="text-xs text-muted-foreground">

@@ -21,6 +21,7 @@ const pad = (value: number, length = 4) => String(value).padStart(length, '0');
 export function buildUser(overrides: Partial<AuthUser> = {}): AuthUser {
   return {
     id: 'user_0001',
+    username: 'test.cashier',
     name: 'Test Cashier',
     email: 'cashier@example.com',
     ...overrides,

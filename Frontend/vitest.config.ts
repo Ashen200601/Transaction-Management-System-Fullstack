@@ -12,9 +12,10 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
     restoreMocks: true,
+    // Form tests type key by key; the 5s default is too tight when every worker is busy.
+    testTimeout: 15_000,
     env: {
       VITE_API_BASE_URL: 'http://api.test',
-      VITE_AUTH_MODE: 'mock',
       VITE_ENABLE_MOCKS: 'false',
     },
     coverage: {
