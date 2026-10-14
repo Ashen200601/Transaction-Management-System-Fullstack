@@ -124,6 +124,7 @@ The `local` profile is used when no profile is set. Production runs with `SPRING
 | `SPRING_DATASOURCE_URL` / `_USERNAME` / `_PASSWORD` | Database connection |
 | `FINOVEX_SECURITY_JWT_SECRET` | Token signing key: base64, at least 32 random bytes. Generate one with `openssl rand -base64 48`. |
 | `FINOVEX_CORS_ALLOWED_ORIGINS` | Frontend origin, if it is served from a different domain |
+| `FINOVEX_BUSINESS_DEFAULT_CURRENCY` | Currency for the business created at sign-up (default `USD`) |
 
 The values in `application-local.yml` and `compose.yaml` are for development only.
 
@@ -137,8 +138,8 @@ The unit tests run anywhere. The integration tests start PostgreSQL in Docker an
 
 ## Not built yet
 
-- Feature modules: businesses, customers, products, inventory, transactions, dashboard, documents, integrations.
+- Feature endpoints: customers, products, inventory, transactions, dashboard, documents, integrations.
+- `GET /businesses`. Sign-up already creates the user's business and makes them its OWNER (`business` and `business_user` tables), but nothing lists them yet, so the frontend still shows its mock businesses.
 - Reading `X-Business-Id` and checking the user's role in that business (permissions in `Frontend/src/features/tenancy/permissions.ts`).
-- Sign-up accepts `businessName` but doesn't store it, because there is no business module yet.
 - Logout doesn't revoke the token. It stays valid until it expires (8 hours).
 - No rate limit on login attempts.

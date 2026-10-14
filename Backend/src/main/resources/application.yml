@@ -37,3 +37,6 @@ finovex:
   cors:
     # Browser origins allowed to call the API. Empty means same-origin only.
     allowed-origins: []
+  business:
+    # Currency (ISO 4217) for the business created at sign-up. The sign-up form doesn't ask for one.
+    default-currency: USD

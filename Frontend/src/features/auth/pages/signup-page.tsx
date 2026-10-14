@@ -9,7 +9,7 @@ import { PasswordInput } from '@/components/ui/password-input';
 import { getErrorMessage, isApiError } from '@/lib/api/errors';
 import { apiFieldErrors, issuesToFieldErrors } from '@/lib/form-errors';
 
-import { useRegisterAccount } from '../api';
+import { useSignUp } from '../api';
 import { useAuth } from '../auth-context';
 import { AuthLayout } from '../components/auth-layout';
 import { PASSWORD_MIN_LENGTH, signupFormSchema, type SignupFormInput } from '../schemas';
@@ -29,7 +29,7 @@ export function SignupPage() {
   const navigate = useNavigate();
   const [values, setValues] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const registration = useRegisterAccount();
+  const signup = useSignUp();
 
   if (status === 'authenticated') {
     return <Navigate replace to="/" />;
@@ -46,8 +46,8 @@ export function SignupPage() {
       return;
     }
     setErrors({});
-    registration.mutate(result.data, {
-      onSuccess: () => navigate('/login', { replace: true, state: { registered: true } }),
+    signup.mutate(result.data, {
+      onSuccess: () => navigate('/login', { replace: true, state: { signedUp: true } }),
       onError: (error) => {
         if (isApiError(error)) setErrors(apiFieldErrors(error.fieldErrors));
       },
@@ -55,7 +55,7 @@ export function SignupPage() {
   }
 
   const showGeneralError =
-    registration.isError && !(isApiError(registration.error) && Object.keys(registration.error.fieldErrors).length > 0);
+    signup.isError && !(isApiError(signup.error) && Object.keys(signup.error.fieldErrors).length > 0);
   const termsErrorId = 'signup-terms-error';
 
   return (
@@ -179,13 +179,13 @@ export function SignupPage() {
 
           {showGeneralError && (
             <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-              {getErrorMessage(registration.error)}
+              {getErrorMessage(signup.error)}
             </p>
           )}
 
-          <Button type="submit" size="lg" className="w-full" disabled={registration.isPending}>
+          <Button type="submit" size="lg" className="w-full" disabled={signup.isPending}>
             <UserPlus aria-hidden />
-            {registration.isPending ? 'Creating account…' : 'Create account'}
+            {signup.isPending ? 'Creating account…' : 'Create account'}
           </Button>
         </form>
 

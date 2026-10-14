@@ -10,7 +10,7 @@ import type { AuthUser, LoginCredentials } from './types';
 // client: no token, no business header, and a 401 means "wrong password", not "signed out".
 const authClient = createHttpClient({ baseUrl: env.apiBaseUrl });
 
-export interface RegisteredAccount {
+export interface SignupResponse {
   id: string;
   username: string;
 }
@@ -22,8 +22,8 @@ export interface LoginResponse {
   user: AuthUser;
 }
 
-export function registerAccount(values: SignupFormValues) {
-  return authClient.post<RegisteredAccount>('/auth/register', values);
+export function signUp(values: SignupFormValues) {
+  return authClient.post<SignupResponse>('/auth/signup', values);
 }
 
 export function signIn(credentials: LoginCredentials) {
@@ -35,6 +35,6 @@ export function signOut(accessToken: string) {
   return authClient.post<void>('/auth/logout', undefined, { headers: { Authorization: `Bearer ${accessToken}` } });
 }
 
-export function useRegisterAccount() {
-  return useMutation({ mutationFn: registerAccount });
+export function useSignUp() {
+  return useMutation({ mutationFn: signUp });
 }

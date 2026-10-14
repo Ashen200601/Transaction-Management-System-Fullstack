@@ -7,12 +7,12 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /**
- * Body of POST /auth/register. The rules and messages mirror the sign-up form
+ * Body of POST /auth/signup. The rules and messages mirror the sign-up form
  * ({@code Frontend/src/features/auth/schemas.ts}); keep the two in step.
  *
- * @param businessName the user's first business; not stored yet, because the business module doesn't exist
+ * @param businessName the user's first business, created with them as its owner
  */
-public record RegisterRequest(
+public record SignupRequest(
 		@NotBlank(message = "Enter your full name")
 		@Size(min = 2, message = "Enter your full name")
 		@Size(max = 100, message = "Keep your name under 100 characters")

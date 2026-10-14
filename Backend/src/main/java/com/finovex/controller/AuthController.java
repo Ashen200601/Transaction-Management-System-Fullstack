@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.finovex.dto.request.LoginRequest;
-import com.finovex.dto.request.RegisterRequest;
+import com.finovex.dto.request.SignupRequest;
 import com.finovex.dto.response.LoginResponse;
-import com.finovex.dto.response.RegisteredAccountResponse;
+import com.finovex.dto.response.SignupResponse;
 import com.finovex.manager.AuthManager;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
@@ -32,11 +32,11 @@ public class AuthController {
 		this.authManager = authManager;
 	}
 
-	@PostMapping("/register")
+	@PostMapping("/signup")
 	@ResponseStatus(HttpStatus.CREATED)
 	@SecurityRequirements
-	public RegisteredAccountResponse register(@Valid @RequestBody RegisterRequest request) {
-		return this.authManager.register(request);
+	public SignupResponse signup(@Valid @RequestBody SignupRequest request) {
+		return this.authManager.signup(request);
 	}
 
 	@PostMapping("/login")

@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -11,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -21,12 +24,19 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.ResultActions;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import com.finovex.TestcontainersConfiguration;
+import com.finovex.entity.Business;
+import com.finovex.entity.BusinessUser;
 import com.finovex.entity.User;
+import com.finovex.enums.BusinessRole;
 import com.finovex.enums.MasterDataStatus;
+import com.finovex.manager.BusinessManager;
+import com.finovex.repository.BusinessRepository;
+import com.finovex.repository.BusinessUserRepository;
 import com.finovex.repository.UserRepository;
 import com.jayway.jsonpath.JsonPath;
 
@@ -46,10 +56,32 @@ class AuthControllerIntegrationTest {
 	@Autowired
 	private UserRepository userRepository;
 
+	@Autowired
+	private BusinessRepository businessRepository;
+
+	@Autowired
+	private BusinessUserRepository businessUserRepository;
+
+	/** The real manager; one test makes it fail to check that sign-up is all or nothing. */
+	@MockitoSpyBean
+	private BusinessManager businessManager;
+
 	@Test
-	void registerThenLoginThenLogout() throws Exception {
+	void signUpIsAllOrNothing() throws Exception {
+		doThrow(new IllegalStateException("simulated failure creating the business")).when(this.businessManager)
+			.createWithOwner(any(), any());
 		String username = uniqueUsername();
-		register(username, username + "@example.com").andExpect(status().isCreated())
+
+		signup(username, username + "@example.com").andExpect(status().isInternalServerError())
+			.andExpect(jsonPath("$.code").value("INTERNAL_ERROR"));
+
+		assertThat(this.userRepository.findByUsername(username)).isEmpty();
+	}
+
+	@Test
+	void signupThenLoginThenLogout() throws Exception {
+		String username = uniqueUsername();
+		signup(username, username + "@example.com").andExpect(status().isCreated())
 			.andExpect(jsonPath("$.id").isString())
 			.andExpect(jsonPath("$.username").value(username));
 
@@ -61,6 +93,18 @@ class AuthControllerIntegrationTest {
 		assertThat(saved.getLastModifiedDate()).isNotNull();
 		assertThat(saved.getStatus()).isEqualTo(MasterDataStatus.ACTIVE.getStatusSeq());
 		assertThat(saved.getStatusDescription()).isEqualTo("Active");
+
+		// Sign-up also created their business, with them as its owner.
+		List<BusinessUser> memberships = this.businessUserRepository.findByUserSeq(saved.getUserSeq());
+		assertThat(memberships).singleElement().satisfies((membership) -> {
+			assertThat(membership.getRole()).isEqualTo(BusinessRole.OWNER);
+			assertThat(membership.getStatus()).isEqualTo(MasterDataStatus.ACTIVE.getStatusSeq());
+			assertThat(membership.getCreatedBy()).isEqualTo("system");
+			Business business = this.businessRepository.findById(membership.getBusinessSeq()).orElseThrow();
+			assertThat(business.getName()).isEqualTo("Perera Stores");
+			assertThat(business.getCurrency()).isEqualTo("USD");
+			assertThat(business.getStatus()).isEqualTo(MasterDataStatus.ACTIVE.getStatusSeq());
+		});
 
 		String loginBody = this.mockMvc
 			.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
@@ -82,11 +126,11 @@ class AuthControllerIntegrationTest {
 	}
 
 	@Test
-	void registerWithTakenUsernameAndEmailIsAConflictPerField() throws Exception {
+	void signupWithTakenUsernameAndEmailIsAConflictPerField() throws Exception {
 		String username = uniqueUsername();
-		register(username, username + "@example.com").andExpect(status().isCreated());
+		signup(username, username + "@example.com").andExpect(status().isCreated());
 
-		register(username, username.toUpperCase() + "@EXAMPLE.com").andExpect(status().isConflict())
+		signup(username, username.toUpperCase() + "@EXAMPLE.com").andExpect(status().isConflict())
 			.andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PROBLEM_JSON_VALUE))
 			.andExpect(jsonPath("$.code").value("ACCOUNT_EXISTS"))
 			.andExpect(jsonPath("$.errors.username[0]").value("That username is taken. Try another."))
@@ -94,9 +138,9 @@ class AuthControllerIntegrationTest {
 	}
 
 	@Test
-	void invalidRegistrationListsEveryFieldProblem() throws Exception {
+	void invalidSignupListsEveryFieldProblem() throws Exception {
 		this.mockMvc
-			.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON)
+			.perform(post("/auth/signup").contentType(MediaType.APPLICATION_JSON)
 				.content(json("{'fullName':'','businessName':'Shop','username':'a b','email':'nope','password':'short'}")))
 			.andExpect(status().isUnprocessableContent())
 			.andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
@@ -112,7 +156,7 @@ class AuthControllerIntegrationTest {
 	@Test
 	void wrongPasswordAndUnknownUserGetTheSameAnswer() throws Exception {
 		String username = uniqueUsername();
-		register(username, username + "@example.com").andExpect(status().isCreated());
+		signup(username, username + "@example.com").andExpect(status().isCreated());
 
 		for (String attempt : new String[] { username, "nobody-" + username }) {
 			this.mockMvc
@@ -155,9 +199,9 @@ class AuthControllerIntegrationTest {
 			.andExpect(status().isForbidden());
 	}
 
-	private ResultActions register(String username, String email)
+	private ResultActions signup(String username, String email)
 			throws Exception {
-		return this.mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON)
+		return this.mockMvc.perform(post("/auth/signup").contentType(MediaType.APPLICATION_JSON)
 			.content(json("{'fullName':'Jane Perera','businessName':'Perera Stores','username':'%s','email':'%s','password':'secret123'}",
 					username, email)));
 	}

@@ -51,7 +51,7 @@ export const authHandlers = [
     return new HttpResponse(null, { status: 204 });
   }),
 
-  http.post(api('/auth/register'), async ({ request }) => {
+  http.post(api('/auth/signup'), async ({ request }) => {
     await latency();
     const body = (await request.json()) as Record<string, unknown>;
     // The API receives the payload, so validate it as the form would (password confirmed, terms accepted).

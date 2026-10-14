@@ -11,7 +11,18 @@ describe('parseEnv', () => {
     expect(parseEnv(baseEnv)).toEqual({
       apiBaseUrl: 'https://api.finovex.test/v1',
       enableMocks: false,
+      mocksExcept: [],
     });
+  });
+
+  it('reads the API modules that skip the mocks, tidied and without duplicates', () => {
+    const env = parseEnv({ ...baseEnv, VITE_MOCKS_EXCEPT: ' Auth, products,,auth ' });
+    expect(env.mocksExcept).toEqual(['auth', 'products']);
+  });
+
+  it('rejects VITE_MOCKS_EXCEPT entries that are not module names', () => {
+    expect(() => parseEnv({ ...baseEnv, VITE_MOCKS_EXCEPT: 'auth;products' })).toThrow(/VITE_MOCKS_EXCEPT/);
+    expect(() => parseEnv({ ...baseEnv, VITE_MOCKS_EXCEPT: '/auth/login' })).toThrow(/VITE_MOCKS_EXCEPT/);
   });
 
   it('removes a trailing slash from the API base URL', () => {
@@ -31,6 +42,16 @@ describe('parseEnv', () => {
   it('rejects a missing or invalid API base URL', () => {
     expect(() => parseEnv({ ...baseEnv, VITE_API_BASE_URL: undefined })).toThrow(/VITE_API_BASE_URL/);
     expect(() => parseEnv({ ...baseEnv, VITE_API_BASE_URL: 'not a url' })).toThrow(/VITE_API_BASE_URL/);
+  });
+
+  it('accepts a path on this site, which the dev server proxies to the backend', () => {
+    expect(parseEnv({ ...baseEnv, VITE_API_BASE_URL: '/api/' }).apiBaseUrl).toBe('/api');
+  });
+
+  it('rejects paths that are not on this site, or are the bare root', () => {
+    for (const value of ['//evil.example/api', 'api', '/', '/ api']) {
+      expect(() => parseEnv({ ...baseEnv, VITE_API_BASE_URL: value }), value).toThrow(/VITE_API_BASE_URL/);
+    }
   });
 
   it('refuses the mock API, and its demo sign-in, in production builds', () => {

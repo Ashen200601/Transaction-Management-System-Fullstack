@@ -54,6 +54,20 @@ describe('createHttpClient', () => {
     expect(requests[0].url.pathname).toBe('/v1/products');
   });
 
+  it('resolves a base path like /api against the page origin', async () => {
+    let requestedUrl = '';
+    server.use(
+      http.get(`${location.origin}/api/products`, ({ request }) => {
+        requestedUrl = request.url;
+        return HttpResponse.json([]);
+      }),
+    );
+
+    await createClient({ baseUrl: '/api' }).get('/products');
+
+    expect(requestedUrl).toBe(`${location.origin}/api/products`);
+  });
+
   it('serialises query params and skips empty values', async () => {
     const requests = capture('get', '/transactions');
 

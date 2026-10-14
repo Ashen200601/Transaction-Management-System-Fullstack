@@ -20,11 +20,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.finovex.dto.request.LoginRequest;
-import com.finovex.dto.request.RegisterRequest;
+import com.finovex.dto.request.SignupRequest;
 import com.finovex.entity.User;
 import com.finovex.enums.MasterDataStatus;
 import com.finovex.exception.ApiException;
 import com.finovex.exception.ErrorCode;
+import com.finovex.manager.BusinessManager;
 import com.finovex.repository.UserRepository;
 import com.finovex.security.JwtService;
 
@@ -43,16 +44,20 @@ class AuthManagerImplTest {
 	@Mock
 	private JwtService jwtService;
 
+	@Mock
+	private BusinessManager businessManager;
+
 	private AuthManagerImpl authManager;
 
 	@BeforeEach
 	void setUp() {
 		when(this.passwordEncoder.encode(anyString())).thenReturn(UNKNOWN_USER_HASH);
-		this.authManager = new AuthManagerImpl(this.userRepository, this.passwordEncoder, this.jwtService);
+		this.authManager = new AuthManagerImpl(this.userRepository, this.passwordEncoder, this.jwtService,
+				this.businessManager);
 	}
 
 	@Test
-	void registerStoresAnActiveUserWithLowercaseUsernameAndEmailAndHashedPassword() {
+	void signupStoresAnActiveUserAndMakesThemOwnerOfTheirBusiness() {
 		when(this.passwordEncoder.encode("secret123")).thenReturn("{bcrypt}hashed");
 		when(this.userRepository.save(any(User.class))).thenAnswer((invocation) -> {
 			User user = invocation.getArgument(0);
@@ -60,7 +65,7 @@ class AuthManagerImplTest {
 			return user;
 		});
 
-		var response = this.authManager.register(new RegisterRequest(" Jane Perera ", "Perera Stores",
+		var response = this.authManager.signup(new SignupRequest(" Jane Perera ", "Perera Stores",
 				" Jane.Perera ", "Jane@Example.com", "secret123"));
 
 		ArgumentCaptor<User> saved = ArgumentCaptor.forClass(User.class);
@@ -72,20 +77,22 @@ class AuthManagerImplTest {
 		assertThat(saved.getValue().getStatus()).isEqualTo(MasterDataStatus.ACTIVE.getStatusSeq());
 		assertThat(saved.getValue().getStatusDescription()).isEqualTo("Active");
 		assertThat(response.id()).isEqualTo("42");
+		verify(this.businessManager).createWithOwner("Perera Stores", saved.getValue());
 	}
 
 	@Test
-	void registerRejectsTakenUsernameAndEmailTogether() {
+	void signupRejectsTakenUsernameAndEmailTogether() {
 		when(this.userRepository.existsByUsername("jane")).thenReturn(true);
 		when(this.userRepository.existsByEmail("jane@example.com")).thenReturn(true);
 
 		assertThatThrownBy(() -> this.authManager
-			.register(new RegisterRequest("Jane", "Shop", "jane", "jane@example.com", "secret123")))
+			.signup(new SignupRequest("Jane", "Shop", "jane", "jane@example.com", "secret123")))
 			.isInstanceOfSatisfying(ApiException.class, (ex) -> {
 				assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.ACCOUNT_EXISTS);
 				assertThat(ex.getFieldErrors()).containsOnlyKeys("username", "email");
 			});
 		verify(this.userRepository, never()).save(any());
+		verify(this.businessManager, never()).createWithOwner(any(), any());
 	}
 
 	@Test

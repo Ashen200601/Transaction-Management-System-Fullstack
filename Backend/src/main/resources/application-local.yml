@@ -2,9 +2,9 @@
 # Nothing in this file is a real secret, and none of it may be used outside a developer machine.
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5433/finovex
-    username: finovex
-    password: finovex
+    url: jdbc:postgresql://localhost:5432/finovex
+    username: tmsadmin
+    password: tmsadmin
 
 finovex:
   security:

@@ -1,5 +1,8 @@
 import { setupWorker } from 'msw/browser';
 
-import { handlers } from './handlers';
+import { env } from '@/config/env';
 
-export const worker = setupWorker(...handlers);
+import { handlers } from './handlers';
+import { selectHandlers } from './select-handlers';
+
+export const worker = setupWorker(...selectHandlers(handlers, env.mocksExcept, env.apiBaseUrl));

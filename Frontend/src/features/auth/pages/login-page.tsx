@@ -35,7 +35,7 @@ export function LoginPage() {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const returnTo = sanitizeReturnTo(searchParams.get('returnTo'));
-  const justRegistered = (location.state as { registered?: boolean } | null)?.registered === true;
+  const justSignedUp = (location.state as { signedUp?: boolean } | null)?.signedUp === true;
 
   const [values, setValues] = useState<LoginFormInput>({ username: '', password: '' });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -92,7 +92,7 @@ export function LoginPage() {
               {signInErrorMessage(error)}
             </p>
           ) : (
-            justRegistered && (
+            justSignedUp && (
               <p
                 role="status"
                 className="flex items-start gap-2 rounded-md border border-success/30 bg-success/5 px-3 py-2.5 text-sm text-success"
@@ -169,7 +169,11 @@ export function LoginPage() {
             </Link>
           </p>
           {env.enableMocks && (
-            <p className="text-xs text-muted-foreground">Development mode: the demo sign-in is in src/mocks/handlers/auth.ts.</p>
+            <p className="text-xs text-muted-foreground">
+              {env.mocksExcept.includes('auth')
+                ? 'Development mode: sign-in uses the real backend. Create an account to get started.'
+                : 'Development mode: the demo sign-in is in src/mocks/handlers/auth.ts.'}
+            </p>
           )}
         </div>
       </div>

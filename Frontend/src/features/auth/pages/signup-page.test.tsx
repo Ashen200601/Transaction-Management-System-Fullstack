@@ -77,7 +77,7 @@ describe('SignupPage', () => {
   it('creates the account and sends the user to sign in', async () => {
     let payload: unknown;
     server.use(
-      http.post('*/auth/register', async ({ request }) => {
+      http.post('*/auth/signup', async ({ request }) => {
         payload = await request.json();
         return HttpResponse.json({ id: 'user_1', username: 'jane.perera' }, { status: 201 });
       }),
@@ -99,7 +99,7 @@ describe('SignupPage', () => {
 
   it('shows the API error on the field it belongs to', async () => {
     server.use(
-      http.post('*/auth/register', () =>
+      http.post('*/auth/signup', () =>
         HttpResponse.json(
           {
             title: 'Email already registered',

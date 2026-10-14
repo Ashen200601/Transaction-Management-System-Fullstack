@@ -12,14 +12,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.finovex.dto.request.LoginRequest;
-import com.finovex.dto.request.RegisterRequest;
+import com.finovex.dto.request.SignupRequest;
 import com.finovex.dto.response.LoginResponse;
-import com.finovex.dto.response.RegisteredAccountResponse;
+import com.finovex.dto.response.SignupResponse;
 import com.finovex.entity.User;
 import com.finovex.enums.MasterDataStatus;
 import com.finovex.exception.ApiException;
 import com.finovex.exception.ErrorCode;
 import com.finovex.manager.AuthManager;
+import com.finovex.manager.BusinessManager;
 import com.finovex.mapper.UserMapper;
 import com.finovex.repository.UserRepository;
 import com.finovex.security.JwtService;
@@ -34,22 +35,26 @@ public class AuthManagerImpl implements AuthManager {
 
 	private final JwtService jwtService;
 
+	private final BusinessManager businessManager;
+
 	/**
 	 * Checked when the username doesn't exist, so an unknown username takes as long to reject
 	 * as a wrong password and can't be detected by timing.
 	 */
 	private final String unknownUserPasswordHash;
 
-	public AuthManagerImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+	public AuthManagerImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService,
+			BusinessManager businessManager) {
 		this.userRepository = userRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.jwtService = jwtService;
+		this.businessManager = businessManager;
 		this.unknownUserPasswordHash = passwordEncoder.encode(UUID.randomUUID().toString());
 	}
 
 	@Override
 	@Transactional
-	public RegisteredAccountResponse register(RegisterRequest request) {
+	public SignupResponse signup(SignupRequest request) {
 		String username = normalize(request.username());
 		String email = normalize(request.email());
 
@@ -71,7 +76,11 @@ public class AuthManagerImpl implements AuthManager {
 		user.setPasswordHash(this.passwordEncoder.encode(request.password()));
 		user.setStatus(MasterDataStatus.ACTIVE.getStatusSeq());
 		user = this.userRepository.save(user);
-		return new RegisteredAccountResponse(String.valueOf(user.getUserSeq()), user.getUsername());
+
+		// Same transaction: if the business can't be created, the account isn't either.
+		this.businessManager.createWithOwner(request.businessName(), user);
+
+		return new SignupResponse(String.valueOf(user.getUserSeq()), user.getUsername());
 	}
 
 	@Override

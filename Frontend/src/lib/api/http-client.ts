@@ -27,7 +27,8 @@ export interface HttpClient {
 }
 
 function buildUrl(baseUrl: string, path: string, params?: QueryParams) {
-  const url = new URL(`${baseUrl.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`);
+  // A base like "/api" resolves against the page's own origin; an absolute base ignores it.
+  const url = new URL(`${baseUrl.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`, globalThis.location?.origin);
   for (const [key, value] of Object.entries(params ?? {})) {
     if (value !== undefined && value !== null && value !== '') {
       url.searchParams.set(key, String(value));

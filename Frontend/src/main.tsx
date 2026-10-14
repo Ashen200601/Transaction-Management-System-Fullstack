@@ -6,12 +6,16 @@ import { env } from '@/config/env';
 
 import '@/styles/globals.css';
 
-/** In development, serve the API from in-browser mocks (VITE_ENABLE_MOCKS=true). */
+/**
+ * In development, serve the API from in-browser mocks (VITE_ENABLE_MOCKS=true), except the
+ * modules in VITE_MOCKS_EXCEPT, which go to the real API.
+ */
 async function startMockApi() {
   if (!env.enableMocks) return;
   const { worker } = await import('./mocks/browser');
   await worker.start({ onUnhandledRequest: 'bypass', quiet: true });
-  console.info('[Finovex] Mock API is on: data lives in this browser tab and resets on reload.');
+  const real = env.mocksExcept.length > 0 ? ` Real API at ${env.apiBaseUrl} for: ${env.mocksExcept.join(', ')}.` : '';
+  console.info(`[Finovex] Mock API is on: mocked data lives in this browser tab and resets on reload.${real}`);
 }
 
 void startMockApi().then(() => {
