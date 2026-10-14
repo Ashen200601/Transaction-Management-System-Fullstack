@@ -1,0 +1,39 @@
+# Settings shared by every environment. Environment-specific values live in
+# application-<profile>.yml; "local" is used when no profile is chosen.
+spring:
+  application:
+    name: finovex-backend
+  profiles:
+    default: local
+  jpa:
+    # Flyway owns the schema (src/main/resources/db/migration); Hibernate only checks it matches the entities.
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+server:
+  port: 8080
+  servlet:
+    # The frontend calls http://localhost:8080/api (VITE_API_BASE_URL).
+    context-path: /api
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+finovex:
+  security:
+    jwt:
+      issuer: finovex-api
+      # Matches the frontend's session length. The signing secret is per environment:
+      # set FINOVEX_SECURITY_JWT_SECRET (base64, at least 32 bytes) outside local development.
+      access-token-ttl: 8h
+  cors:
+    # Browser origins allowed to call the API. Empty means same-origin only.
+    allowed-origins: []
