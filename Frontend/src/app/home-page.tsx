@@ -1,27 +1,24 @@
-import { useState } from 'react';
-
-import { Button } from '@/components/ui/button';
+import homeDemo from '@/assets/home-demo.svg';
 import { COMPANY } from '@/config/company';
 import { useAuth } from '@/features/auth/auth-context';
 
-/** Where users land after signing in, until the first feature is built. */
 export function HomePage() {
-  const { user, logout } = useAuth();
-  const [signingOut, setSigningOut] = useState(false);
-
-  async function handleSignOut() {
-    setSigningOut(true);
-    await logout();
-  }
+  const { user } = useAuth();
+  const firstName = user?.name.split(' ')[0];
 
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center gap-3 p-4 text-center">
-      <p className="text-sm font-medium text-primary">{COMPANY.name}</p>
-      <h1 className="text-2xl font-semibold">Welcome, {user?.name}</h1>
-      <p className="text-sm text-muted-foreground">You&apos;re signed in as {user?.username}.</p>
-      <Button variant="outline" className="mt-2" onClick={handleSignOut} disabled={signingOut}>
-        {signingOut ? 'Signing out…' : 'Sign out'}
-      </Button>
-    </main>
+    <div className="mx-auto grid max-w-5xl gap-6">
+      <div className="grid gap-1">
+        <p className="text-sm font-medium text-primary">{COMPANY.name}</p>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Welcome back, {firstName}</h1>
+        <p className="text-sm text-muted-foreground">{COMPANY.description}</p>
+      </div>
+
+      <img
+        src={homeDemo}
+        alt="Illustration of the Finovex dashboard with sales charts, a receipt and stock"
+        className="w-full rounded-2xl border border-border bg-card shadow-sm"
+      />
+    </div>
   );
 }

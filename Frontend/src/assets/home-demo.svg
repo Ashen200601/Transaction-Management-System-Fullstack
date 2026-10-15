@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 460" fill="none">
+  <!-- Demo picture for the home page: a stylised Finovex dashboard. Replace with a real image later. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="800" y2="460" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#e6f2fb"/>
+      <stop offset="1" stop-color="#cfe6f7"/>
+    </linearGradient>
+    <linearGradient id="bar" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#1a8ad4"/>
+      <stop offset="1" stop-color="#0b78c2"/>
+    </linearGradient>
+    <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#1a8ad4" stop-opacity=".28"/>
+      <stop offset="1" stop-color="#1a8ad4" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#0b4f80" flood-opacity=".12"/>
+    </filter>
+  </defs>
+
+  <rect width="800" height="460" rx="24" fill="url(#bg)"/>
+  <circle cx="720" cy="60" r="120" fill="#ffffff" opacity=".35"/>
+  <circle cx="70" cy="420" r="140" fill="#ffffff" opacity=".3"/>
+
+  <!-- App window -->
+  <g filter="url(#shadow)">
+    <rect x="70" y="50" width="560" height="360" rx="16" fill="#ffffff"/>
+  </g>
+  <rect x="70" y="50" width="560" height="36" rx="16" fill="#f3f8fc"/>
+  <rect x="70" y="70" width="560" height="16" fill="#f3f8fc"/>
+  <circle cx="92" cy="68" r="5" fill="#f2a7a0"/>
+  <circle cx="108" cy="68" r="5" fill="#f4d58d"/>
+  <circle cx="124" cy="68" r="5" fill="#9fd8b4"/>
+
+  <!-- Sidebar -->
+  <rect x="70" y="86" width="110" height="324" fill="#f7fbfe"/>
+  <rect x="88" y="102" width="22" height="22" rx="6" fill="#0b78c2"/>
+  <path d="M94 107h10v2.6h-7.1v2.6h6.2v2.6h-6.2V120H94z" fill="#fff"/>
+  <rect x="116" y="109" width="48" height="8" rx="4" fill="#cfe1ef"/>
+  <rect x="84" y="140" width="84" height="22" rx="6" fill="#dcecf8"/>
+  <rect x="94" y="147" width="40" height="8" rx="4" fill="#0b78c2"/>
+  <rect x="94" y="179" width="52" height="8" rx="4" fill="#d6e3ee"/>
+  <rect x="94" y="207" width="44" height="8" rx="4" fill="#d6e3ee"/>
+  <rect x="94" y="235" width="56" height="8" rx="4" fill="#d6e3ee"/>
+  <rect x="94" y="263" width="40" height="8" rx="4" fill="#d6e3ee"/>
+  <rect x="94" y="291" width="48" height="8" rx="4" fill="#d6e3ee"/>
+
+  <!-- Stat cards -->
+  <rect x="200" y="104" width="128" height="64" rx="10" fill="#f3f8fc"/>
+  <rect x="214" y="118" width="54" height="7" rx="3.5" fill="#b9cfe0"/>
+  <rect x="214" y="136" width="80" height="14" rx="5" fill="#0b78c2"/>
+  <rect x="342" y="104" width="128" height="64" rx="10" fill="#f3f8fc"/>
+  <rect x="356" y="118" width="64" height="7" rx="3.5" fill="#b9cfe0"/>
+  <rect x="356" y="136" width="62" height="14" rx="5" fill="#2f9e6e"/>
+  <rect x="484" y="104" width="128" height="64" rx="10" fill="#f3f8fc"/>
+  <rect x="498" y="118" width="46" height="7" rx="3.5" fill="#b9cfe0"/>
+  <rect x="498" y="136" width="70" height="14" rx="5" fill="#d99a2b"/>
+
+  <!-- Sales chart -->
+  <rect x="200" y="184" width="270" height="206" rx="10" fill="#f9fcfe" stroke="#e3eef6"/>
+  <rect x="216" y="198" width="70" height="8" rx="4" fill="#b9cfe0"/>
+  <path d="M216 360h238M216 326h238M216 292h238M216 258h238" stroke="#e3eef6"/>
+  <rect x="226" y="300" width="22" height="60" rx="4" fill="url(#bar)" opacity=".55"/>
+  <rect x="262" y="270" width="22" height="90" rx="4" fill="url(#bar)" opacity=".7"/>
+  <rect x="298" y="286" width="22" height="74" rx="4" fill="url(#bar)" opacity=".6"/>
+  <rect x="334" y="246" width="22" height="114" rx="4" fill="url(#bar)" opacity=".85"/>
+  <rect x="370" y="262" width="22" height="98" rx="4" fill="url(#bar)" opacity=".75"/>
+  <rect x="406" y="226" width="22" height="134" rx="4" fill="url(#bar)"/>
+
+  <!-- Trend card -->
+  <rect x="484" y="184" width="128" height="206" rx="10" fill="#f9fcfe" stroke="#e3eef6"/>
+  <rect x="498" y="198" width="58" height="8" rx="4" fill="#b9cfe0"/>
+  <path d="M498 330 L522 312 L544 320 L566 290 L586 296 L600 262 L600 360 L498 360 Z" fill="url(#area)"/>
+  <path d="M498 330 L522 312 L544 320 L566 290 L586 296 L600 262" stroke="#0b78c2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="600" cy="262" r="5" fill="#fff" stroke="#0b78c2" stroke-width="3"/>
+  <rect x="498" y="226" width="60" height="14" rx="5" fill="#dcecf8"/>
+
+  <!-- Floating receipt -->
+  <g filter="url(#shadow)" transform="rotate(6 690 250)">
+    <path d="M640 170h104v170l-13-8-13 8-13-8-13 8-13-8-13 8-13-8-13 8z" fill="#ffffff"/>
+  </g>
+  <g transform="rotate(6 690 250)">
+    <rect x="656" y="188" width="56" height="9" rx="4.5" fill="#0b78c2"/>
+    <rect x="656" y="212" width="72" height="6" rx="3" fill="#d6e3ee"/>
+    <rect x="656" y="228" width="60" height="6" rx="3" fill="#d6e3ee"/>
+    <rect x="656" y="244" width="68" height="6" rx="3" fill="#d6e3ee"/>
+    <rect x="656" y="260" width="52" height="6" rx="3" fill="#d6e3ee"/>
+    <path d="M656 282h72" stroke="#cfe1ef" stroke-dasharray="4 4"/>
+    <rect x="656" y="294" width="30" height="8" rx="4" fill="#b9cfe0"/>
+    <rect x="696" y="292" width="32" height="12" rx="4" fill="#2f9e6e"/>
+  </g>
+
+  <!-- Stock box -->
+  <g filter="url(#shadow)">
+    <path d="M600 372l46-22 46 22-46 22z" fill="#f4d58d"/>
+    <path d="M600 372v46l46 22v-46z" fill="#e6b85c"/>
+    <path d="M692 372v46l-46 22v-46z" fill="#d99a2b"/>
+    <path d="M623 361l46 22" stroke="#fff" stroke-opacity=".6" stroke-width="5"/>
+  </g>
+</svg>
