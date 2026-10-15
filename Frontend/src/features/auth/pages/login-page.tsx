@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
-import { env } from '@/config/env';
 import { getErrorMessage, isApiError } from '@/lib/api/errors';
 import { issuesToFieldErrors } from '@/lib/form-errors';
 
@@ -161,21 +160,12 @@ export function LoginPage() {
           </Button>
         </form>
 
-        <div className="grid gap-3 text-center">
-          <p className="text-sm text-muted-foreground">
-            Don&apos;t have an account?{' '}
-            <Link to="/signup" className="font-medium text-primary hover:underline">
-              Create one
-            </Link>
-          </p>
-          {env.enableMocks && (
-            <p className="text-xs text-muted-foreground">
-              {env.mocksExcept.includes('auth')
-                ? 'Development mode: sign-in uses the real backend. Create an account to get started.'
-                : 'Development mode: the demo sign-in is in src/mocks/handlers/auth.ts.'}
-            </p>
-          )}
-        </div>
+        <p className="text-center text-sm text-muted-foreground">
+          Don&apos;t have an account?{' '}
+          <Link to="/signup" className="font-medium text-primary hover:underline">
+            Create one
+          </Link>
+        </p>
       </div>
     </AuthLayout>
   );

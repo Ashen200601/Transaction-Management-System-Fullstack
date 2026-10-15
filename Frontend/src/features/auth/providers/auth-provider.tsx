@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
-import { isApiError } from '@/lib/api/errors';
+import { isApiError, refreshSession, signIn, signOut, type LoginResponse } from '@/lib/api';
 
-import { refreshSession, signIn, signOut, type LoginResponse } from '../api';
 import { AuthContext, type AuthContextValue } from '../auth-context';
 import { clearSessionHint, hasSessionHint, setSessionHint } from '../session-hint';
 import type { AuthStatus, AuthUser, LoginCredentials } from '../types';

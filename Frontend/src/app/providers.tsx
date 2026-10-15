@@ -3,7 +3,6 @@ import { useState, type ReactNode } from 'react';
 
 import { useAuth } from '@/features/auth/auth-context';
 import { AuthProvider } from '@/features/auth/providers/auth-provider';
-import { activeBusinessStore } from '@/features/tenancy/active-business-store';
 import { configureApiClient } from '@/lib/api';
 
 import { createQueryClient } from './query-client';
@@ -20,7 +19,6 @@ function ApiClientBridge({ children }: { children: ReactNode }) {
     getAccessToken,
     // A 401 is retried once with a renewed token before it counts as "signed out".
     refreshAccessToken,
-    getBusinessId: () => activeBusinessStore.get(),
     onUnauthorized: () => {
       queryClient.clear();
       void logout();

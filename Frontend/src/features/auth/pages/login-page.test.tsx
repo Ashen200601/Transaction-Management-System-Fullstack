@@ -83,9 +83,9 @@ describe('LoginPage', () => {
     renderWithProviders(<LoginPage />, {
       route: '/login?returnTo=https%3A%2F%2Fevil.example',
       path: '/login',
-      routes: { '/': <h1>Dashboard</h1> },
+      routes: { '/': <h1>Home</h1> },
     });
 
-    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Home' })).toBeInTheDocument();
   });
 });

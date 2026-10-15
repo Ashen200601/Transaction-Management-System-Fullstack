@@ -6,9 +6,8 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { vi } from 'vitest';
 
 import { AuthContext, type AuthContextValue } from '@/features/auth/auth-context';
-import { TenantContext, type TenantContextValue } from '@/features/tenancy/tenant-context';
 
-import { buildBusiness, buildUser } from './factories';
+import { buildUser } from './factories';
 
 export * from '@testing-library/react';
 export { userEvent };
@@ -36,18 +35,6 @@ export function createAuthValue(overrides: Partial<AuthContextValue> = {}): Auth
   };
 }
 
-/** The owner of one business by default. Pass `{ activeBusiness: null }` for "no business selected". */
-export function createTenantValue(overrides: Partial<TenantContextValue> = {}): TenantContextValue {
-  const activeBusiness =
-    'activeBusiness' in overrides ? (overrides.activeBusiness ?? null) : buildBusiness();
-  return {
-    businesses: activeBusiness ? [activeBusiness] : [],
-    selectBusiness: vi.fn(),
-    ...overrides,
-    activeBusiness,
-  };
-}
-
 /** Mirrors the router location into the DOM so tests can assert navigation. */
 function LocationProbe() {
   const { pathname, search, hash } = useLocation();
@@ -61,44 +48,40 @@ export function currentLocation() {
 
 interface ProviderOptions {
   auth?: Partial<AuthContextValue>;
-  tenant?: Partial<TenantContextValue>;
   queryClient?: QueryClient;
-  /** Initial URL, e.g. '/transactions?page=2'. */
+  /** Initial URL, e.g. '/login?returnTo=%2F'. */
   route?: string;
 }
 
-function createProviders({ auth, tenant, queryClient = createTestQueryClient(), route = '/' }: ProviderOptions) {
+function createProviders({ auth, queryClient = createTestQueryClient(), route = '/' }: ProviderOptions) {
   const authValue = createAuthValue(auth);
-  const tenantValue = createTenantValue(tenant);
 
   function Providers({ children }: { children: ReactNode }) {
     return (
       <QueryClientProvider client={queryClient}>
         <AuthContext.Provider value={authValue}>
-          <TenantContext.Provider value={tenantValue}>
-            <MemoryRouter initialEntries={[route]}>
-              {children}
-              <LocationProbe />
-            </MemoryRouter>
-          </TenantContext.Provider>
+          <MemoryRouter initialEntries={[route]}>
+            {children}
+            <LocationProbe />
+          </MemoryRouter>
         </AuthContext.Provider>
       </QueryClientProvider>
     );
   }
 
-  return { Providers, auth: authValue, tenant: tenantValue, queryClient };
+  return { Providers, auth: authValue, queryClient };
 }
 
 interface RenderWithProvidersOptions extends ProviderOptions, Omit<RenderOptions, 'wrapper'> {
-  /** Route pattern the UI is mounted at, e.g. '/transactions/:id'. Defaults to '*'. */
+  /** Route pattern the UI is mounted at, e.g. '/login'. Defaults to '*'. */
   path?: string;
   /** Sibling routes to land on after a redirect, e.g. `{ '/login': <h1>Sign in</h1> }`. */
   routes?: Record<string, ReactNode>;
 }
 
 export function renderWithProviders(ui: ReactElement, options: RenderWithProvidersOptions = {}) {
-  const { auth, tenant, queryClient, route, path = '*', routes = {}, ...renderOptions } = options;
-  const providers = createProviders({ auth, tenant, queryClient, route });
+  const { auth, queryClient, route, path = '*', routes = {}, ...renderOptions } = options;
+  const providers = createProviders({ auth, queryClient, route });
   const user = userEvent.setup();
 
   const view = render(
@@ -115,7 +98,6 @@ export function renderWithProviders(ui: ReactElement, options: RenderWithProvide
     ...view,
     user,
     auth: providers.auth,
-    tenant: providers.tenant,
     queryClient: providers.queryClient,
   };
 }
@@ -129,7 +111,6 @@ export function renderHookWithProviders<Result, Props>(
   return {
     ...view,
     auth: providers.auth,
-    tenant: providers.tenant,
     queryClient: providers.queryClient,
   };
 }

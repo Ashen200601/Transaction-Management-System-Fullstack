@@ -16,12 +16,11 @@ export default defineConfig({
     testTimeout: 15_000,
     env: {
       VITE_API_BASE_URL: 'http://api.test',
-      VITE_ENABLE_MOCKS: 'false',
     },
     coverage: {
       provider: 'v8',
       include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/test/**', 'src/mocks/**', 'src/**/*.test.{ts,tsx}', 'src/main.tsx'],
+      exclude: ['src/test/**', 'src/**/*.test.{ts,tsx}', 'src/main.tsx'],
     },
   },
 });

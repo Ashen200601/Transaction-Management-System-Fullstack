@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       // The app calls /api on its own origin and the dev server forwards it to the backend:
-      // no CORS in development, and the mock service worker can pass those calls through.
+      // no CORS in development.
       proxy: API_PROXY_TARGET
         ? {
             '/api': {

@@ -123,9 +123,9 @@ describe('SignupPage', () => {
     renderWithProviders(<SignupPage />, {
       route: '/signup',
       path: '/signup',
-      routes: { '/': <h1>Dashboard</h1> },
+      routes: { '/': <h1>Home</h1> },
     });
 
-    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Home' })).toBeInTheDocument();
   });
 });

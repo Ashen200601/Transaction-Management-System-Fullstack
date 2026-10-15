@@ -9,7 +9,7 @@ export function NotFoundPage() {
       <h1 className="text-2xl font-semibold">Page not found</h1>
       <p className="text-sm text-muted-foreground">The page you were looking for doesn&apos;t exist or has moved.</p>
       <Link to="/" className={buttonVariants({ variant: 'outline', className: 'mt-2' })}>
-        Go to dashboard
+        Go to home
       </Link>
     </main>
   );

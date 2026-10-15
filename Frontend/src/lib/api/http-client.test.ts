@@ -12,7 +12,6 @@ function createClient(overrides: Partial<HttpClientConfig> = {}) {
   return createHttpClient({
     baseUrl: BASE_URL,
     getAccessToken: async () => 'token-123',
-    getBusinessId: () => 'biz_0001',
     ...overrides,
   });
 }
@@ -82,23 +81,21 @@ describe('createHttpClient', () => {
     });
   });
 
-  it('sends the bearer token and active business id', async () => {
+  it('sends the bearer token', async () => {
     const requests = capture('get', '/me');
 
     await createClient().get('/me');
 
     expect(requests[0].headers.get('authorization')).toBe('Bearer token-123');
-    expect(requests[0].headers.get('x-business-id')).toBe('biz_0001');
     expect(requests[0].headers.get('accept')).toBe('application/json');
   });
 
-  it('omits auth and business headers when they are not available', async () => {
+  it('omits the auth header when there is no token', async () => {
     const requests = capture('get', '/me');
 
-    await createClient({ getAccessToken: async () => null, getBusinessId: () => null }).get('/me');
+    await createClient({ getAccessToken: async () => null }).get('/me');
 
     expect(requests[0].headers.has('authorization')).toBe(false);
-    expect(requests[0].headers.has('x-business-id')).toBe(false);
   });
 
   it('sends JSON request bodies', async () => {

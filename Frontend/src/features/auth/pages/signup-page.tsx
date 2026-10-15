@@ -9,7 +9,7 @@ import { PasswordInput } from '@/components/ui/password-input';
 import { getErrorMessage, isApiError } from '@/lib/api/errors';
 import { apiFieldErrors, issuesToFieldErrors } from '@/lib/form-errors';
 
-import { useSignUp } from '../api';
+import { useSignUp } from '../hooks';
 import { useAuth } from '../auth-context';
 import { AuthLayout } from '../components/auth-layout';
 import { PASSWORD_MIN_LENGTH, signupFormSchema, type SignupFormInput } from '../schemas';

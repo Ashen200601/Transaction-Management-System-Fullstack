@@ -11,8 +11,6 @@ export interface HttpClientConfig {
    * sent once more with the new token.
    */
   refreshAccessToken?: () => Promise<string | null>;
-  /** The business (tenant) the request acts on, sent as X-Business-Id. */
-  getBusinessId?: () => string | null;
   /** Called when the API answers 401 and no new token helps, e.g. to sign the user out. */
   onUnauthorized?: () => void;
 }
@@ -66,9 +64,6 @@ export function createHttpClient(config: HttpClientConfig): HttpClient {
 
     const token = retryToken ?? (await config.getAccessToken?.());
     if (token) headers.set('Authorization', `Bearer ${token}`);
-
-    const businessId = config.getBusinessId?.();
-    if (businessId) headers.set('X-Business-Id', businessId);
 
     if (options.idempotencyKey) headers.set('Idempotency-Key', options.idempotencyKey);
 
