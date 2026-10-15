@@ -1,11 +1,8 @@
-import { QueryClientProvider, useQueryClient } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 import { useAuth } from '@/features/auth/auth-context';
 import { AuthProvider } from '@/features/auth/providers/auth-provider';
 import { configureApiClient } from '@/lib/api';
-
-import { createQueryClient } from './query-client';
 
 /**
  * Points the shared API client at the current session. Assigned during render
@@ -13,29 +10,21 @@ import { createQueryClient } from './query-client';
  */
 function ApiClientBridge({ children }: { children: ReactNode }) {
   const { getAccessToken, refreshAccessToken, logout } = useAuth();
-  const queryClient = useQueryClient();
 
   configureApiClient({
     getAccessToken,
     // A 401 is retried once with a renewed token before it counts as "signed out".
     refreshAccessToken,
-    onUnauthorized: () => {
-      queryClient.clear();
-      void logout();
-    },
+    onUnauthorized: () => void logout(),
   });
 
   return <>{children}</>;
 }
 
 export function AppProviders({ children }: { children: ReactNode }) {
-  const [queryClient] = useState(createQueryClient);
-
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ApiClientBridge>{children}</ApiClientBridge>
-      </AuthProvider>
-    </QueryClientProvider>
+    <AuthProvider>
+      <ApiClientBridge>{children}</ApiClientBridge>
+    </AuthProvider>
   );
 }

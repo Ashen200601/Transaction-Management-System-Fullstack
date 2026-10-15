@@ -1,5 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, renderHook, screen, type RenderOptions } from '@testing-library/react';
+import { render, screen, type RenderOptions } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement, ReactNode } from 'react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
@@ -11,16 +10,6 @@ import { buildUser } from './factories';
 
 export * from '@testing-library/react';
 export { userEvent };
-
-/** A fresh client per test. No retries, so error states render immediately. */
-export function createTestQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: { retry: false, gcTime: Infinity },
-      mutations: { retry: false },
-    },
-  });
-}
 
 /** A signed-in user by default. Pass `{ status: 'unauthenticated', user: null }` for a guest. */
 export function createAuthValue(overrides: Partial<AuthContextValue> = {}): AuthContextValue {
@@ -48,28 +37,25 @@ export function currentLocation() {
 
 interface ProviderOptions {
   auth?: Partial<AuthContextValue>;
-  queryClient?: QueryClient;
   /** Initial URL, e.g. '/login?returnTo=%2F'. */
   route?: string;
 }
 
-function createProviders({ auth, queryClient = createTestQueryClient(), route = '/' }: ProviderOptions) {
+function createProviders({ auth, route = '/' }: ProviderOptions) {
   const authValue = createAuthValue(auth);
 
   function Providers({ children }: { children: ReactNode }) {
     return (
-      <QueryClientProvider client={queryClient}>
-        <AuthContext.Provider value={authValue}>
-          <MemoryRouter initialEntries={[route]}>
-            {children}
-            <LocationProbe />
-          </MemoryRouter>
-        </AuthContext.Provider>
-      </QueryClientProvider>
+      <AuthContext.Provider value={authValue}>
+        <MemoryRouter initialEntries={[route]}>
+          {children}
+          <LocationProbe />
+        </MemoryRouter>
+      </AuthContext.Provider>
     );
   }
 
-  return { Providers, auth: authValue, queryClient };
+  return { Providers, auth: authValue };
 }
 
 interface RenderWithProvidersOptions extends ProviderOptions, Omit<RenderOptions, 'wrapper'> {
@@ -80,8 +66,8 @@ interface RenderWithProvidersOptions extends ProviderOptions, Omit<RenderOptions
 }
 
 export function renderWithProviders(ui: ReactElement, options: RenderWithProvidersOptions = {}) {
-  const { auth, queryClient, route, path = '*', routes = {}, ...renderOptions } = options;
-  const providers = createProviders({ auth, queryClient, route });
+  const { auth, route, path = '*', routes = {}, ...renderOptions } = options;
+  const providers = createProviders({ auth, route });
   const user = userEvent.setup();
 
   const view = render(
@@ -98,19 +84,5 @@ export function renderWithProviders(ui: ReactElement, options: RenderWithProvide
     ...view,
     user,
     auth: providers.auth,
-    queryClient: providers.queryClient,
-  };
-}
-
-export function renderHookWithProviders<Result, Props>(
-  hook: (props: Props) => Result,
-  { initialProps, ...options }: ProviderOptions & { initialProps?: Props } = {},
-) {
-  const providers = createProviders(options);
-  const view = renderHook(hook, { wrapper: providers.Providers, initialProps });
-  return {
-    ...view,
-    auth: providers.auth,
-    queryClient: providers.queryClient,
   };
 }

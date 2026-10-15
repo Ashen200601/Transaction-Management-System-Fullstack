@@ -6,10 +6,10 @@ import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
+import { signUp } from '@/lib/api';
 import { getErrorMessage, isApiError } from '@/lib/api/errors';
 import { apiFieldErrors, issuesToFieldErrors } from '@/lib/form-errors';
 
-import { useSignUp } from '../hooks';
 import { useAuth } from '../auth-context';
 import { AuthLayout } from '../components/auth-layout';
 import { PASSWORD_MIN_LENGTH, signupFormSchema, type SignupFormInput } from '../schemas';
@@ -29,7 +29,8 @@ export function SignupPage() {
   const navigate = useNavigate();
   const [values, setValues] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const signup = useSignUp();
+  const [error, setError] = useState<unknown>(null);
+  const [isPending, setIsPending] = useState(false);
 
   if (status === 'authenticated') {
     return <Navigate replace to="/" />;
@@ -38,24 +39,29 @@ export function SignupPage() {
   const set = <K extends keyof SignupFormInput>(key: K, value: SignupFormInput[K]) =>
     setValues((previous) => ({ ...previous, [key]: value }));
 
-  function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    setError(null);
     const result = signupFormSchema.safeParse(values);
     if (!result.success) {
       setErrors(issuesToFieldErrors(result.error.issues));
       return;
     }
     setErrors({});
-    signup.mutate(result.data, {
-      onSuccess: () => navigate('/login', { replace: true, state: { signedUp: true } }),
-      onError: (error) => {
-        if (isApiError(error)) setErrors(apiFieldErrors(error.fieldErrors));
-      },
-    });
+    setIsPending(true);
+    try {
+      await signUp(result.data);
+      navigate('/login', { replace: true, state: { signedUp: true } });
+    } catch (caught) {
+      setError(caught);
+      if (isApiError(caught)) setErrors(apiFieldErrors(caught.fieldErrors));
+    } finally {
+      setIsPending(false);
+    }
   }
 
-  const showGeneralError =
-    signup.isError && !(isApiError(signup.error) && Object.keys(signup.error.fieldErrors).length > 0);
+  // Field problems show beside their fields; anything else shows above the button.
+  const showGeneralError = error !== null && !(isApiError(error) && Object.keys(error.fieldErrors).length > 0);
   const termsErrorId = 'signup-terms-error';
 
   return (
@@ -179,13 +185,13 @@ export function SignupPage() {
 
           {showGeneralError && (
             <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-              {getErrorMessage(signup.error)}
+              {getErrorMessage(error)}
             </p>
           )}
 
-          <Button type="submit" size="lg" className="w-full" disabled={signup.isPending}>
+          <Button type="submit" size="lg" className="w-full" disabled={isPending}>
             <UserPlus aria-hidden />
-            {signup.isPending ? 'Creating account…' : 'Create account'}
+            {isPending ? 'Creating account…' : 'Create account'}
           </Button>
         </form>
 
