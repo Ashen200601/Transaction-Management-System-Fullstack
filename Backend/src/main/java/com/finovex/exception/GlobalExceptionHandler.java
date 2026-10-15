@@ -84,7 +84,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 			HttpHeaders headers, HttpStatusCode status, WebRequest request) {
 		Map<String, Set<String>> messages = new LinkedHashMap<>();
 		for (FieldError error : ex.getBindingResult().getFieldErrors()) {
-			messages.computeIfAbsent(error.getField(), (field) -> new LinkedHashSet<>()).add(error.getDefaultMessage());
+			// A value of the wrong type (e.g. letters for a number) has a Java message; don't send that.
+			String message = error.isBindingFailure() ? "Enter a valid value" : error.getDefaultMessage();
+			messages.computeIfAbsent(error.getField(), (field) -> new LinkedHashSet<>()).add(message);
 		}
 		for (ObjectError error : ex.getBindingResult().getGlobalErrors()) {
 			messages.computeIfAbsent("_", (field) -> new LinkedHashSet<>()).add(error.getDefaultMessage());

@@ -28,7 +28,8 @@ export function FormField({ label, error, hint, className, labelAction, children
   const describedBy = [hint && !error ? hintId : null, error ? errorId : null].filter(Boolean).join(' ');
 
   return (
-    <div className={cn('grid gap-1.5', className)}>
+    // content-start: beside a taller field (one with a hint), keep the label and control at the top.
+    <div className={cn('grid content-start gap-1.5', className)}>
       {labelAction ? (
         <div className="flex items-baseline justify-between gap-2">
           <Label htmlFor={id}>{label}</Label>

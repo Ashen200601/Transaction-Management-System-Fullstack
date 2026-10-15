@@ -7,12 +7,12 @@ import { APP_MODULES } from './modules';
 
 describe('AppLayout', () => {
   it('lists every main module in the sidebar, with the current one marked', () => {
-    renderWithProviders(<AppLayout />, { route: '/products' });
+    renderWithProviders(<AppLayout />, { route: '/items' });
 
     const nav = screen.getAllByRole('navigation', { name: 'Main' })[0];
     const links = within(nav).getAllByRole('link');
     expect(links.map((link) => link.textContent)).toEqual(APP_MODULES.map((module) => module.label));
-    expect(within(nav).getByRole('link', { name: 'Products' })).toHaveAttribute('aria-current', 'page');
+    expect(within(nav).getByRole('link', { name: 'Items' })).toHaveAttribute('aria-current', 'page');
     expect(within(nav).getByRole('link', { name: 'Home' })).not.toHaveAttribute('aria-current');
   });
 

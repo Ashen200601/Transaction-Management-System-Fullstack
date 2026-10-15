@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import { ToastProvider } from '@/components/ui/toast';
 import { useAuth } from '@/features/auth/auth-context';
 import { AuthProvider } from '@/features/auth/providers/auth-provider';
 import { configureApiClient } from '@/lib/api';
@@ -23,8 +24,10 @@ function ApiClientBridge({ children }: { children: ReactNode }) {
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
-    <AuthProvider>
-      <ApiClientBridge>{children}</ApiClientBridge>
-    </AuthProvider>
+    <ToastProvider>
+      <AuthProvider>
+        <ApiClientBridge>{children}</ApiClientBridge>
+      </AuthProvider>
+    </ToastProvider>
   );
 }

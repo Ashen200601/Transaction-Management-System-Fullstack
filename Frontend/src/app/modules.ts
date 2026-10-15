@@ -13,7 +13,7 @@ export const APP_MODULES: readonly AppModule[] = [
   { label: 'Home', path: '/', icon: House, ready: true },
   { label: 'Transactions', path: '/transactions', icon: ReceiptText, ready: false },
   { label: 'Customers', path: '/customers', icon: Users, ready: false },
-  { label: 'Products', path: '/products', icon: Package, ready: false },
+  { label: 'Items', path: '/items', icon: Package, ready: true },
   { label: 'Inventory', path: '/inventory', icon: Boxes, ready: false },
   { label: 'Documents', path: '/documents', icon: ScanLine, ready: false },
   { label: 'Integrations', path: '/integrations', icon: Plug, ready: false },

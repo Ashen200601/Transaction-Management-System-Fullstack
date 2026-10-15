@@ -4,6 +4,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { vi } from 'vitest';
 
+import { ToastProvider } from '@/components/ui/toast';
 import { AuthContext, type AuthContextValue } from '@/features/auth/auth-context';
 
 import { buildUser } from './factories';
@@ -46,12 +47,14 @@ function createProviders({ auth, route = '/' }: ProviderOptions) {
 
   function Providers({ children }: { children: ReactNode }) {
     return (
-      <AuthContext.Provider value={authValue}>
-        <MemoryRouter initialEntries={[route]}>
-          {children}
-          <LocationProbe />
-        </MemoryRouter>
-      </AuthContext.Provider>
+      <ToastProvider>
+        <AuthContext.Provider value={authValue}>
+          <MemoryRouter initialEntries={[route]}>
+            {children}
+            <LocationProbe />
+          </MemoryRouter>
+        </AuthContext.Provider>
+      </ToastProvider>
     );
   }
 
