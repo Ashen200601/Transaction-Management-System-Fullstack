@@ -40,7 +40,9 @@ public class SecurityConfig {
 			.sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests((requests) -> requests
 				.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
-				.requestMatchers(HttpMethod.POST, "/auth/login", "/auth/signup").permitAll()
+				// Refresh and logout identify the session by its HttpOnly cookie, not an access token.
+				.requestMatchers(HttpMethod.POST, "/auth/login", "/auth/signup", "/auth/refresh", "/auth/logout")
+				.permitAll()
 				.requestMatchers("/actuator/health", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
 				.permitAll()
 				.anyRequest()
@@ -64,6 +66,8 @@ public class SecurityConfig {
 		cors.setAllowedOrigins(properties.allowedOrigins());
 		cors.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 		cors.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Business-Id", "Idempotency-Key"));
+		// Lets an allowed origin send the refresh cookie; the origins above are listed one by one, never "*".
+		cors.setAllowCredentials(true);
 		cors.setMaxAge(Duration.ofHours(1));
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 		source.registerCorsConfiguration("/**", cors);

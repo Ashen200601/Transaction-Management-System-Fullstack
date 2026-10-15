@@ -53,14 +53,14 @@ class BusinessManagerImplTest {
 		assertThat(business.getBusinessSeq()).isEqualTo(9);
 		assertThat(business.getName()).isEqualTo("Perera Stores");
 		assertThat(business.getCurrency()).isEqualTo("LKR");
-		assertThat(business.getStatus()).isEqualTo(MasterDataStatus.ACTIVE.getStatusSeq());
+		assertThat(business.getStatus()).isEqualTo(MasterDataStatus.APPROVED.getStatusSeq());
 
 		ArgumentCaptor<BusinessUser> membership = ArgumentCaptor.forClass(BusinessUser.class);
 		verify(this.businessUserRepository).save(membership.capture());
 		assertThat(membership.getValue().getBusiness()).isSameAs(business);
 		assertThat(membership.getValue().getUser()).isSameAs(owner);
 		assertThat(membership.getValue().getRole()).isEqualTo(BusinessRole.OWNER);
-		assertThat(membership.getValue().getStatus()).isEqualTo(MasterDataStatus.ACTIVE.getStatusSeq());
+		assertThat(membership.getValue().getStatus()).isEqualTo(MasterDataStatus.APPROVED.getStatusSeq());
 	}
 
 }

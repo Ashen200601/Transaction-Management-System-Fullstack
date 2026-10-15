@@ -98,7 +98,15 @@ Every entity follows the team's style. [User.java](src/main/java/com/finovex/ent
   ```
   Every entity can use the generator name `G1`. Each one still draws from its own `sequenceName` (tested on Hibernate 7.4).
 - **Audit columns** in every entity: `createdBy` (`@CreatedBy`), `createdDate` (`@CreatedDate`), `lastModifiedBy` (`@LastModifiedBy`) and `lastModifiedDate` (`@LastModifiedDate`), as `java.util.Date` with `@JsonFormat(pattern = "yyyy-MM-dd HH:mm")`. Add `@EntityListeners(AuditingEntityListener.class)` on the class. They hold the signed-in username, or `system` when nobody is signed in (see `JpaConfig`).
-- **Status**: `Integer status` plus `@Transient statusDescription`. `setStatus` sets the description with `MasterDataStatus.findOne(status).getStatus()`.
+- **Status**: `Integer status` plus `@Transient statusDescription`. `setStatus` sets the description with `MasterDataStatus.findOne(status).getStatus()`. The same codes are used everywhere:
+
+  | Code | `MasterDataStatus` | Meaning |
+  | --- | --- | --- |
+  | 2 | `APPROVED` | In use. Only approved rows may be used: only approved users sign in. |
+  | 1 | `OPEN` | Inactive: kept, but not usable (a disabled user, a used refresh token). |
+  | 0 | `DELETED` | Deleted. Rows are never removed; queries skip them with `...AndStatusNot(..., DELETED)`. |
+
+  New records start as `APPROVED`. To delete a record, set `DELETED` instead of removing the row. The one exception is expired refresh tokens, which the nightly job purges; they're security housekeeping, not business data.
 - **Relations**: `@ManyToOne`/`@OneToOne(fetch = FetchType.LAZY)` with `@JoinColumn`, plus the same foreign key as a read-only `Integer xxxSeq` getter (`insertable = false, updatable = false`).
 - **Every getter is mapped to a column**, so mark helper or UI-only getters `@Transient`.
 - **The migration must match the entity**: the `<table>_seq` sequence, `INTEGER` keys, `TIMESTAMP` dates and the four audit columns. Hibernate checks this at startup and refuses to start on a mismatch.
@@ -112,8 +120,43 @@ Every entity follows the team's style. [User.java](src/main/java/com/finovex/ent
 | Money | Integer minor units (cents) as `long`/`BIGINT`. Never use `double`. |
 | IDs | `Integer` keys from a sequence (`<table>_seq`). JSON sends them as strings (`"42"`) because the frontend types every id as a string. |
 | Times | `java.util.Date` in entities, stored as `TIMESTAMP` in UTC. Response DTOs send ISO-8601 strings. |
-| Auth | `Authorization: Bearer <accessToken>` from `POST /auth/login` |
+| Auth | `Authorization: Bearer <accessToken>` from `POST /auth/login` or `POST /auth/refresh`. See [Sign-in sessions](#sign-in-sessions). |
 | Business | The frontend sends the active business in the `X-Business-Id` header. CORS already allows it; nothing reads it yet. |
+
+## Sign-in sessions
+
+| Endpoint | What it does |
+| --- | --- |
+| `POST /auth/login` | Checks the password. Returns a **15-minute access token** in the body and sets the **refresh cookie**. |
+| `POST /auth/refresh` | Uses up the cookie's refresh token. Returns a new access token and sets the next refresh cookie. |
+| `POST /auth/logout` | Ends the session on the server and deletes the cookie. |
+
+- **The refresh cookie** (`finovex_refresh`):
+  - **HttpOnly**, so page scripts can't read it.
+  - **SameSite=Strict**, so other sites can't make the browser send it.
+  - Sent only to `/api/auth/*`.
+  - Gone when the browser closes.
+- **What's stored.** Each refresh token is 256 random bits, and only its SHA-256 hash is stored (`refresh_token` table).
+- **Session length.** A session ends **8 hours after sign-in** (`finovex.security.session.ttl`), however active the user is. Access tokens never outlive it.
+- **Reuse detection.** Each refresh token works once. If a used token is presented again more than 10 seconds later (`reuse-grace`), it was copied, so every token of that session is revoked.
+- **Account status.** A disabled account loses its session at the next refresh.
+- **Cleanup.** `ExpiredSessionCleanup` deletes the tokens of sessions that ended more than a day ago, every night at 03:30.
+
+**Login audit.** `user_login_audit` gets one row per sign-in attempt, refresh and sign-out:
+
+| Column | Meaning |
+| --- | --- |
+| `event` | `LOGIN`, `REFRESH` or `LOGOUT` |
+| `result` | `SUCCESS`, `INVALID_CREDENTIALS`, `ACCOUNT_DISABLED`, `INVALID_TOKEN`, `SESSION_EXPIRED`, `SESSION_REVOKED` or `TOKEN_REUSED` |
+| `user_seq` | The account; empty when the username matched none |
+| `username` | What was typed |
+| `session_id` | The sign-in session |
+| `ip_address`, `user_agent` | The client |
+| `created_date` | When it happened |
+
+- **Failed attempts are kept.** Rows are written in their own transaction, so a failed attempt is recorded even though the sign-in is rolled back.
+- **Clients see less.** A client only ever sees "incorrect username or password" or "session ended"; the exact reason is in the audit.
+- **No rows for empty refreshes.** A refresh without any cookie isn't recorded: the app checks for a session on page load.
 
 ## Configuration
 
@@ -141,5 +184,5 @@ The unit tests run anywhere. The integration tests start PostgreSQL in Docker an
 - Feature endpoints: customers, products, inventory, transactions, dashboard, documents, integrations.
 - `GET /businesses`. Sign-up already creates the user's business and makes them its OWNER (`business` and `business_user` tables), but nothing lists them yet, so the frontend still shows its mock businesses.
 - Reading `X-Business-Id` and checking the user's role in that business (permissions in `Frontend/src/features/tenancy/permissions.ts`).
-- Logout doesn't revoke the token. It stays valid until it expires (8 hours).
-- No rate limit on login attempts.
+- No rate limit or lockout on login attempts. Failed attempts are recorded in `user_login_audit`, ready for one.
+- No screen or API for reading the login audit yet.

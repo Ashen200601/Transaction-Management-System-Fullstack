@@ -33,19 +33,28 @@ public class JwtService {
 		this.ttl = properties.accessTokenTtl();
 	}
 
-	public IssuedToken issue(User user) {
+	/**
+	 * @param sessionId the sign-in session, sent as the {@code sid} claim
+	 * @param sessionEnds the token never outlives its session
+	 */
+	public IssuedToken issue(User user, String sessionId, Instant sessionEnds) {
 		Instant now = Instant.now();
+		Instant expiresAt = now.plus(this.ttl);
+		if (expiresAt.isAfter(sessionEnds)) {
+			expiresAt = sessionEnds;
+		}
 		JwtClaimsSet claims = JwtClaimsSet.builder()
 			.issuer(this.issuer)
 			.subject(String.valueOf(user.getUserSeq()))
 			.id(UUID.randomUUID().toString())
 			.issuedAt(now)
-			.expiresAt(now.plus(this.ttl))
+			.expiresAt(expiresAt)
 			.claim("username", user.getUsername())
+			.claim("sid", sessionId)
 			.build();
 		JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
 		String token = this.encoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
-		return new IssuedToken(token, this.ttl.toSeconds());
+		return new IssuedToken(token, Math.max(0, Duration.between(now, expiresAt).toSeconds()));
 	}
 
 	/**

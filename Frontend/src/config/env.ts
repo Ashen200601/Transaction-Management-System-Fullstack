@@ -37,6 +37,7 @@ export function parseEnv(raw: RawEnv): AppEnv {
   const errors: string[] = [];
 
   const apiBaseUrl = readString(raw, 'VITE_API_BASE_URL').replace(/\/+$/, '');
+  
   if (!isHttpUrl(apiBaseUrl) && !isSitePath(apiBaseUrl)) {
     errors.push('VITE_API_BASE_URL must be an absolute http(s) URL or a path on this site, such as /api.');
   }

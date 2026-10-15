@@ -9,6 +9,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -28,6 +29,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.ResultActions;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import jakarta.servlet.http.Cookie;
+
 import com.finovex.TestcontainersConfiguration;
 import com.finovex.entity.Business;
 import com.finovex.entity.BusinessUser;
@@ -38,7 +41,7 @@ import com.finovex.manager.BusinessManager;
 import com.finovex.repository.BusinessRepository;
 import com.finovex.repository.BusinessUserRepository;
 import com.finovex.repository.UserRepository;
-import com.jayway.jsonpath.JsonPath;
+import com.finovex.security.RefreshTokenCookie;
 
 /**
  * End to end through every layer: HTTP, security, controller, manager, repository and a real
@@ -91,38 +94,40 @@ class AuthControllerIntegrationTest {
 		assertThat(saved.getCreatedBy()).isEqualTo("system");
 		assertThat(saved.getCreatedDate()).isNotNull();
 		assertThat(saved.getLastModifiedDate()).isNotNull();
-		assertThat(saved.getStatus()).isEqualTo(MasterDataStatus.ACTIVE.getStatusSeq());
-		assertThat(saved.getStatusDescription()).isEqualTo("Active");
+		assertThat(saved.getStatus()).isEqualTo(MasterDataStatus.APPROVED.getStatusSeq());
+		assertThat(saved.getStatusDescription()).isEqualTo("APPROVED");
 
 		// Sign-up also created their business, with them as its owner.
-		List<BusinessUser> memberships = this.businessUserRepository.findByUserSeq(saved.getUserSeq());
+		List<BusinessUser> memberships = this.businessUserRepository.findByUserSeqAndStatusNot(saved.getUserSeq(),
+				MasterDataStatus.DELETED.getStatusSeq());
 		assertThat(memberships).singleElement().satisfies((membership) -> {
 			assertThat(membership.getRole()).isEqualTo(BusinessRole.OWNER);
-			assertThat(membership.getStatus()).isEqualTo(MasterDataStatus.ACTIVE.getStatusSeq());
+			assertThat(membership.getStatus()).isEqualTo(MasterDataStatus.APPROVED.getStatusSeq());
 			assertThat(membership.getCreatedBy()).isEqualTo("system");
 			Business business = this.businessRepository.findById(membership.getBusinessSeq()).orElseThrow();
 			assertThat(business.getName()).isEqualTo("Perera Stores");
 			assertThat(business.getCurrency()).isEqualTo("USD");
-			assertThat(business.getStatus()).isEqualTo(MasterDataStatus.ACTIVE.getStatusSeq());
+			assertThat(business.getStatus()).isEqualTo(MasterDataStatus.APPROVED.getStatusSeq());
 		});
 
-		String loginBody = this.mockMvc
+		Cookie refreshCookie = this.mockMvc
 			.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
 				.content(json("{'username':'%s','password':'secret123'}", username.toUpperCase())))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.accessToken").isNotEmpty())
-			.andExpect(jsonPath("$.expiresIn").value(8 * 60 * 60))
+			.andExpect(jsonPath("$.expiresIn").value(15 * 60))
+			.andExpect(jsonPath("$.refreshToken").doesNotExist())
 			.andExpect(jsonPath("$.user.id").value(String.valueOf(saved.getUserSeq())))
 			.andExpect(jsonPath("$.user.username").value(username))
 			.andExpect(jsonPath("$.user.name").value("Jane Perera"))
 			.andExpect(jsonPath("$.user.email").value(username + "@example.com"))
 			.andReturn()
 			.getResponse()
-			.getContentAsString();
-		String token = JsonPath.read(loginBody, "$.accessToken");
+			.getCookie(RefreshTokenCookie.NAME);
 
-		this.mockMvc.perform(post("/auth/logout").header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
-			.andExpect(status().isNoContent());
+		this.mockMvc.perform(post("/auth/logout").cookie(refreshCookie))
+			.andExpect(status().isNoContent())
+			.andExpect(cookie().maxAge(RefreshTokenCookie.NAME, 0));
 	}
 
 	@Test
@@ -170,12 +175,13 @@ class AuthControllerIntegrationTest {
 
 	@Test
 	void protectedEndpointsNeedAValidToken() throws Exception {
-		this.mockMvc.perform(post("/auth/logout"))
+		// Everything outside the public list needs a token, even a path that doesn't exist.
+		this.mockMvc.perform(get("/businesses"))
 			.andExpect(status().isUnauthorized())
 			.andExpect(header().string(HttpHeaders.WWW_AUTHENTICATE, "Bearer"))
 			.andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
 
-		this.mockMvc.perform(post("/auth/logout").header(HttpHeaders.AUTHORIZATION, "Bearer not-a-real-token"))
+		this.mockMvc.perform(get("/businesses").header(HttpHeaders.AUTHORIZATION, "Bearer not-a-real-token"))
 			.andExpect(status().isUnauthorized())
 			.andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
 	}

@@ -35,14 +35,14 @@ public class BusinessManagerImpl implements BusinessManager {
 		Business business = new Business();
 		business.setName(name.trim());
 		business.setCurrency(this.defaultCurrency);
-		business.setStatus(MasterDataStatus.ACTIVE.getStatusSeq());
+		business.setStatus(MasterDataStatus.APPROVED.getStatusSeq());
 		business = this.businessRepository.save(business);
 
 		BusinessUser membership = new BusinessUser();
 		membership.setBusiness(business);
 		membership.setUser(owner);
 		membership.setRole(BusinessRole.OWNER);
-		membership.setStatus(MasterDataStatus.ACTIVE.getStatusSeq());
+		membership.setStatus(MasterDataStatus.APPROVED.getStatusSeq());
 		this.businessUserRepository.save(membership);
 
 		return business;

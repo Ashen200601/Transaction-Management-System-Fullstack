@@ -1,13 +1,19 @@
 package com.finovex.enums;
 
 /**
- * Values of the {@code status} column on master data (users, products, customers, ...).
- * The number is what's stored; {@link #getStatus()} is the label shown as statusDescription.
+ * Values of the {@code status} column on every table that has one. The number is what's stored;
+ * {@link #getStatus()} is the label shown as statusDescription.
+ * <ul>
+ * <li>{@link #APPROVED}: in use. Only approved rows may be used (e.g. only approved users sign in).</li>
+ * <li>{@link #OPEN}: inactive. Kept, but not usable (a disabled user, a used refresh token).</li>
+ * <li>{@link #DELETED}: deleted. Rows are never removed; queries skip them with {@code ...AndStatusNot}.</li>
+ * </ul>
  */
 public enum MasterDataStatus {
 
-	ACTIVE(1, "Active"),
-	INACTIVE(2, "Inactive");
+	DELETED(0, "DELETED"),
+	OPEN(1, "OPEN"),
+	APPROVED(2, "APPROVED");
 
 	private final Integer statusSeq;
 

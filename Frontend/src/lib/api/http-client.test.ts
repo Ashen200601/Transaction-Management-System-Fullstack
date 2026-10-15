@@ -179,4 +179,83 @@ describe('createHttpClient', () => {
 
     expect(onUnauthorized).toHaveBeenCalledTimes(1);
   });
+
+  describe('after a 401', () => {
+    it('renews the access token and sends the request once more', async () => {
+      const authorizations: Array<string | null> = [];
+      server.use(
+        http.get(`${BASE_URL}/me`, ({ request }) => {
+          authorizations.push(request.headers.get('authorization'));
+          return authorizations.length === 1
+            ? HttpResponse.json({ title: 'Expired' }, { status: 401 })
+            : HttpResponse.json({ id: 'user_1' });
+        }),
+      );
+      const onUnauthorized = vi.fn();
+      const refreshAccessToken = vi.fn(async () => 'token-456');
+
+      await expect(createClient({ refreshAccessToken, onUnauthorized }).get('/me')).resolves.toEqual({ id: 'user_1' });
+
+      expect(authorizations).toEqual(['Bearer token-123', 'Bearer token-456']);
+      expect(refreshAccessToken).toHaveBeenCalledTimes(1);
+      expect(onUnauthorized).not.toHaveBeenCalled();
+    });
+
+    it('gives up when the session has ended', async () => {
+      server.use(http.get(`${BASE_URL}/me`, () => HttpResponse.json({ title: 'Expired' }, { status: 401 })));
+      const onUnauthorized = vi.fn();
+
+      await expect(
+        createClient({ refreshAccessToken: async () => null, onUnauthorized }).get('/me'),
+      ).rejects.toMatchObject({ status: 401 });
+
+      expect(onUnauthorized).toHaveBeenCalledTimes(1);
+    });
+
+    it('retries only once, even if the new token is refused too', async () => {
+      let requests = 0;
+      server.use(
+        http.get(`${BASE_URL}/me`, () => {
+          requests += 1;
+          return HttpResponse.json({ title: 'Nope' }, { status: 401 });
+        }),
+      );
+      const onUnauthorized = vi.fn();
+      const refreshAccessToken = vi.fn(async () => 'token-456');
+
+      await expect(createClient({ refreshAccessToken, onUnauthorized }).get('/me')).rejects.toMatchObject({
+        status: 401,
+      });
+
+      expect(requests).toBe(2);
+      expect(refreshAccessToken).toHaveBeenCalledTimes(1);
+      expect(onUnauthorized).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not renew anything for a request sent without a token, such as a wrong password', async () => {
+      server.use(http.post(`${BASE_URL}/auth/login`, () => HttpResponse.json({ title: 'Nope' }, { status: 401 })));
+      const refreshAccessToken = vi.fn(async () => 'token-456');
+
+      await expect(
+        createClient({ getAccessToken: async () => null, refreshAccessToken }).post('/auth/login', {}),
+      ).rejects.toMatchObject({ status: 401 });
+
+      expect(refreshAccessToken).not.toHaveBeenCalled();
+    });
+  });
+
+  it('sends cookies only when asked to', async () => {
+    const credentials: RequestCredentials[] = [];
+    server.use(
+      http.post(`${BASE_URL}/auth/refresh`, ({ request }) => {
+        credentials.push(request.credentials);
+        return HttpResponse.json({});
+      }),
+    );
+
+    await createClient({ credentials: 'include' }).post('/auth/refresh');
+    await createClient().post('/auth/refresh');
+
+    expect(credentials).toEqual(['include', 'same-origin']);
+  });
 });

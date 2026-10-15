@@ -20,6 +20,9 @@ server:
   servlet:
     # The frontend calls http://localhost:8080/api (VITE_API_BASE_URL).
     context-path: /api
+  # Behind a trusted reverse proxy (or the Vite dev proxy), take the client's IP and https from
+  # its X-Forwarded-* headers. Only proxies on private and local addresses are trusted.
+  forward-headers-strategy: native
 
 management:
   endpoints:
@@ -31,9 +34,17 @@ finovex:
   security:
     jwt:
       issuer: finovex-api
-      # Matches the frontend's session length. The signing secret is per environment:
-      # set FINOVEX_SECURITY_JWT_SECRET (base64, at least 32 bytes) outside local development.
-      access-token-ttl: 8h
+      # Short on purpose: the frontend renews it with the refresh cookie. The signing secret is per
+      # environment: set FINOVEX_SECURITY_JWT_SECRET (base64, at least 32 bytes) outside local development.
+      access-token-ttl: 15m
+    session:
+      # A sign-in lasts this long, however active the user is; then they sign in again.
+      ttl: 8h
+      # A just-used refresh token is still accepted this long, for two tabs refreshing at once.
+      # Used later than that, it was copied, and the whole session is ended.
+      reuse-grace: 10s
+      # The refresh cookie is sent over HTTPS only.
+      cookie-secure: true
   cors:
     # Browser origins allowed to call the API. Empty means same-origin only.
     allowed-origins: []

@@ -13,11 +13,13 @@ import { createQueryClient } from './query-client';
  * (idempotently) so it is in place before any child component's first request.
  */
 function ApiClientBridge({ children }: { children: ReactNode }) {
-  const { getAccessToken, logout } = useAuth();
+  const { getAccessToken, refreshAccessToken, logout } = useAuth();
   const queryClient = useQueryClient();
 
   configureApiClient({
     getAccessToken,
+    // A 401 is retried once with a renewed token before it counts as "signed out".
+    refreshAccessToken,
     getBusinessId: () => activeBusinessStore.get(),
     onUnauthorized: () => {
       queryClient.clear();

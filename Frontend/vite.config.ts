@@ -23,6 +23,8 @@ export default defineConfig(({ mode }) => {
         ? {
             '/api': {
               target: API_PROXY_TARGET,
+              // Pass the browser's address on (X-Forwarded-For), so the login audit records it.
+              xfwd: true,
               configure: (proxy) => {
                 // Backend not running: answer like the API would, so the app shows a clear message.
                 proxy.on('error', (_error, _request, response) => {

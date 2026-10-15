@@ -31,6 +31,7 @@ export function createAuthValue(overrides: Partial<AuthContextValue> = {}): Auth
     login: vi.fn(async () => {}),
     logout: vi.fn(async () => {}),
     getAccessToken: vi.fn(async () => 'test-access-token'),
+    refreshAccessToken: vi.fn(async () => 'test-access-token'),
     ...overrides,
   };
 }

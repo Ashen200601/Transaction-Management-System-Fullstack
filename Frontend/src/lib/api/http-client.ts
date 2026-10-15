@@ -3,10 +3,17 @@ import type { QueryParams } from './types';
 
 export interface HttpClientConfig {
   baseUrl: string;
+  /** "include" sends cookies (the refresh cookie) even when the API is on another origin. */
+  credentials?: RequestCredentials;
   getAccessToken?: () => Promise<string | null> | string | null;
+  /**
+   * Gets a new access token after a 401, or null if the session has ended. The request is then
+   * sent once more with the new token.
+   */
+  refreshAccessToken?: () => Promise<string | null>;
   /** The business (tenant) the request acts on, sent as X-Business-Id. */
   getBusinessId?: () => string | null;
-  /** Called when the API answers 401, e.g. to sign the user out. */
+  /** Called when the API answers 401 and no new token helps, e.g. to sign the user out. */
   onUnauthorized?: () => void;
 }
 
@@ -48,10 +55,16 @@ async function readBody(response: Response): Promise<unknown> {
 }
 
 export function createHttpClient(config: HttpClientConfig): HttpClient {
-  async function request<T>(method: string, path: string, body: unknown, options: RequestOptions = {}): Promise<T> {
+  async function request<T>(
+    method: string,
+    path: string,
+    body: unknown,
+    options: RequestOptions = {},
+    retryToken?: string,
+  ): Promise<T> {
     const headers = new Headers({ Accept: 'application/json', ...options.headers });
 
-    const token = await config.getAccessToken?.();
+    const token = retryToken ?? (await config.getAccessToken?.());
     if (token) headers.set('Authorization', `Bearer ${token}`);
 
     const businessId = config.getBusinessId?.();
@@ -73,6 +86,7 @@ export function createHttpClient(config: HttpClientConfig): HttpClient {
         method,
         headers,
         body: payload,
+        credentials: config.credentials,
         signal: options.signal,
       });
     } catch (error) {
@@ -86,7 +100,14 @@ export function createHttpClient(config: HttpClientConfig): HttpClient {
 
     const data = await readBody(response);
     if (!response.ok) {
-      if (response.status === 401) config.onUnauthorized?.();
+      if (response.status === 401) {
+        // The access token may just have expired: renew it once and try again.
+        if (token && retryToken === undefined && config.refreshAccessToken) {
+          const freshToken = await config.refreshAccessToken();
+          if (freshToken) return request<T>(method, path, body, options, freshToken);
+        }
+        config.onUnauthorized?.();
+      }
       throw parseApiError(response.status, data);
     }
     return data as T;

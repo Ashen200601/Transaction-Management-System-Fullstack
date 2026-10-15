@@ -6,10 +6,13 @@ export * from './errors';
 export * from './http-client';
 export * from './types';
 
-type RuntimeConfig = Required<Omit<HttpClientConfig, 'baseUrl'>>;
+type RuntimeConfig = Required<
+  Pick<HttpClientConfig, 'getAccessToken' | 'refreshAccessToken' | 'getBusinessId' | 'onUnauthorized'>
+>;
 
 const runtime: RuntimeConfig = {
   getAccessToken: () => null,
+  refreshAccessToken: async () => null,
   getBusinessId: () => null,
   onUnauthorized: () => {},
 };
@@ -23,6 +26,7 @@ export function configureApiClient(config: Partial<RuntimeConfig>) {
 export const apiClient = createHttpClient({
   baseUrl: env.apiBaseUrl,
   getAccessToken: () => runtime.getAccessToken(),
+  refreshAccessToken: () => runtime.refreshAccessToken(),
   getBusinessId: () => runtime.getBusinessId(),
   onUnauthorized: () => runtime.onUnauthorized(),
 });

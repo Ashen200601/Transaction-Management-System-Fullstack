@@ -8,7 +8,7 @@ import com.finovex.entity.BusinessUser;
 
 public interface BusinessUserRepository extends JpaRepository<BusinessUser, Integer> {
 
-	/** Every business the user belongs to. */
-	List<BusinessUser> findByUserSeq(Integer userSeq);
+	/** The user's memberships, except those with status {@code statusNot} (usually DELETED). */
+	List<BusinessUser> findByUserSeqAndStatusNot(Integer userSeq, Integer statusNot);
 
 }

@@ -19,12 +19,50 @@ export const DEMO_ACCOUNT: MockAccount = {
   password: 'demo1234',
 };
 
-const SESSION_SECONDS = 8 * 60 * 60;
+// Same lengths as the real API: short access tokens, renewed until the 8-hour session ends.
+const ACCESS_TOKEN_SECONDS = 15 * 60;
+const SESSION_MS = 8 * 60 * 60 * 1000;
+
+// The real API keeps the session in an HttpOnly cookie, which a mock can't set. The mock keeps it
+// for the tab instead, so a reload still restores it.
+const MOCK_SESSION_KEY = 'finovex.mockSession';
+
+interface MockSession {
+  username: string;
+  /** Epoch milliseconds. */
+  endsAt: number;
+}
 
 // Accounts by username. New sign-ups last until the tab reloads.
 const accounts = new Map<string, MockAccount>([[DEMO_ACCOUNT.username, DEMO_ACCOUNT]]);
 
 const toUser = ({ id, username, name, email }: MockAccount): AuthUser => ({ id, username, name, email });
+
+function readMockSession(): MockSession | null {
+  try {
+    const raw = sessionStorage.getItem(MOCK_SESSION_KEY);
+    return raw ? (JSON.parse(raw) as MockSession) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeMockSession(session: MockSession | null) {
+  try {
+    if (session) sessionStorage.setItem(MOCK_SESSION_KEY, JSON.stringify(session));
+    else sessionStorage.removeItem(MOCK_SESSION_KEY);
+  } catch {
+    // Storage blocked: the mock session just won't survive a reload.
+  }
+}
+
+function signedIn(account: MockAccount, endsAt: number): LoginResponse {
+  return {
+    accessToken: `mock-token.${account.id}.${crypto.randomUUID()}`,
+    expiresIn: Math.max(0, Math.min(ACCESS_TOKEN_SECONDS, Math.floor((endsAt - Date.now()) / 1000))),
+    user: toUser(account),
+  };
+}
 
 export const authHandlers = [
   http.post(api('/auth/login'), async ({ request }) => {
@@ -38,16 +76,28 @@ export const authHandlers = [
       return problem(401, 'Sign-in failed', { code: 'INVALID_CREDENTIALS', detail: 'Incorrect username or password.' });
     }
 
-    const response: LoginResponse = {
-      accessToken: `mock-token.${account.id}.${crypto.randomUUID()}`,
-      expiresIn: SESSION_SECONDS,
-      user: toUser(account),
-    };
-    return HttpResponse.json(response);
+    const endsAt = Date.now() + SESSION_MS;
+    writeMockSession({ username: account.username, endsAt });
+    return HttpResponse.json(signedIn(account, endsAt));
+  }),
+
+  http.post(api('/auth/refresh'), async () => {
+    await latency();
+    const session = readMockSession();
+    const account = session && session.endsAt > Date.now() ? accounts.get(session.username) : undefined;
+    if (!session || !account) {
+      writeMockSession(null);
+      return problem(401, 'Session ended', {
+        code: 'SESSION_EXPIRED',
+        detail: 'Your session has ended. Please sign in again.',
+      });
+    }
+    return HttpResponse.json(signedIn(account, session.endsAt));
   }),
 
   http.post(api('/auth/logout'), async () => {
     await latency();
+    writeMockSession(null);
     return new HttpResponse(null, { status: 204 });
   }),
 

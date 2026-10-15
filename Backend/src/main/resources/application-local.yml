@@ -11,6 +11,9 @@ finovex:
     jwt:
       # Development-only signing key. Production sets FINOVEX_SECURITY_JWT_SECRET instead.
       secret: BKSDEz+W5Tun9s8DEk0r6kqL/1wiH/PNTdpG4zLQZqHMH+RZulaJrVW6Vww/bMku
+    session:
+      # Plain HTTP on localhost: some browsers drop Secure cookies there.
+      cookie-secure: false
   cors:
     allowed-origins:
       - http://localhost:5173
