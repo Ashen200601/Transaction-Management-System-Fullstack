@@ -36,7 +36,7 @@ public class Item {
     private String itemName;
     private String description;
     private Long price;
-    private String unit;
+    private Integer unitSeq;
     private Integer status;
     private String statusDescription;
     private String createdBy;
@@ -45,6 +45,7 @@ public class Item {
     private Date lastModifiedDate;
 
     private Business business;
+    private Unit unit;
 
 
     @Id
@@ -121,14 +122,24 @@ public class Item {
     }
 
     /** How the item is counted and sold, e.g. PCS or KG. */
-    @Basic
-    @Column(name = "unit", length = 20, nullable = false)
-    public String getUnit() {
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "unit_seq", nullable = false)
+    public Unit getUnit() {
         return unit;
     }
 
-    public void setUnit(String unit) {
+    public void setUnit(Unit unit) {
         this.unit = unit;
+    }
+
+    @Basic
+    @Column(name = "unit_seq", insertable = false, updatable = false, nullable = false)
+    public Integer getUnitSeq() {
+        return unitSeq;
+    }
+
+    public void setUnitSeq(Integer unitSeq) {
+        this.unitSeq = unitSeq;
     }
 
     @Basic

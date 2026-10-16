@@ -12,7 +12,7 @@ import jakarta.validation.constraints.Size;
  * ({@code Frontend/src/features/items/schemas.ts}); keep the two in step.
  *
  * @param price in the business currency's minor units (cents): 12.50 is 1250
- * @param unit a unit code such as PCS or KG
+ * @param unitId the id of an approved unit (GET /units)
  */
 public record CreateItemRequest(
 		@NotBlank(message = "Enter the item name")
@@ -33,6 +33,6 @@ public record CreateItemRequest(
 		Long price,
 
 		@NotBlank(message = "Choose a unit")
-		@Pattern(regexp = "^[A-Z]{1,20}$", message = "Choose a unit")
-		String unit) {
+		@Pattern(regexp = "^\\s*\\d{1,9}\\s*$", message = "Choose a unit")
+		String unitId) {
 }

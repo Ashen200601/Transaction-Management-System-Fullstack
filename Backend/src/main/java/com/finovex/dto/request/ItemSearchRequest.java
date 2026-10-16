@@ -1,5 +1,6 @@
 package com.finovex.dto.request;
 
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
@@ -9,7 +10,7 @@ import jakarta.validation.constraints.Size;
  *
  * @param itemCode part of the item code, any case
  * @param itemName part of the item name, any case
- * @param unit an exact unit code such as KG
+ * @param unitId the id of a unit (GET /units); blank means any unit
  * @param minPrice lowest price, inclusive, in minor units (cents)
  * @param maxPrice highest price, inclusive, in minor units (cents)
  */
@@ -20,8 +21,8 @@ public record ItemSearchRequest(
 		@Size(max = 120, message = "Keep the item name under 120 characters")
 		String itemName,
 
-		@Size(max = 20, message = "Choose a unit")
-		String unit,
+		@Pattern(regexp = "^\\s*\\d{0,9}\\s*$", message = "Choose a unit")
+		String unitId,
 
 		@PositiveOrZero(message = "The price can't be negative")
 		Long minPrice,

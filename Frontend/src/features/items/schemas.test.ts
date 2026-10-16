@@ -7,7 +7,7 @@ const validForm: ItemFormInput = {
   itemCode: ' esp-1kg ',
   description: '  Medium roast. ',
   price: '25.5',
-  unit: 'KG',
+  unitId: '2',
 };
 
 function errorFields(input: ItemFormInput) {
@@ -22,7 +22,7 @@ describe('itemFormSchema', () => {
       itemCode: 'ESP-1KG',
       description: 'Medium roast.',
       price: 2550,
-      unit: 'KG',
+      unitId: '2',
     });
   });
 
@@ -49,33 +49,30 @@ describe('itemFormSchema', () => {
   });
 
   it('flags every missing field at once', () => {
-    expect(errorFields({ itemName: '', itemCode: '', description: '', price: '', unit: '' })).toEqual([
+    expect(errorFields({ itemName: '', itemCode: '', description: '', price: '', unitId: '' })).toEqual([
       'itemName',
       'itemCode',
       'price',
-      'unit',
+      'unitId',
     ]);
   });
 
-  it('only accepts units from the list', () => {
-    expect(errorFields({ ...validForm, unit: 'TONNE' })).toEqual(['unit']);
-  });
 });
 
 describe('itemSearchSchema', () => {
-  const empty = { itemCode: '', itemName: '', unit: '', minPrice: '', maxPrice: '' };
+  const empty = { itemCode: '', itemName: '', unitId: '', minPrice: '', maxPrice: '' };
 
   it('turns the filters into the query: trimmed, code upper-cased, prices in cents', () => {
     expect(
-      itemSearchSchema.parse({ itemCode: ' esp ', itemName: ' beans ', unit: 'KG', minPrice: '10', maxPrice: '30.5' }),
-    ).toEqual({ itemCode: 'ESP', itemName: 'beans', unit: 'KG', minPrice: 1000, maxPrice: 3050 });
+      itemSearchSchema.parse({ itemCode: ' esp ', itemName: ' beans ', unitId: '2', minPrice: '10', maxPrice: '30.5' }),
+    ).toEqual({ itemCode: 'ESP', itemName: 'beans', unitId: '2', minPrice: 1000, maxPrice: 3050 });
   });
 
   it('treats empty price boxes as no limit', () => {
     expect(itemSearchSchema.parse(empty)).toEqual({
       itemCode: '',
       itemName: '',
-      unit: '',
+      unitId: '',
       minPrice: undefined,
       maxPrice: undefined,
     });

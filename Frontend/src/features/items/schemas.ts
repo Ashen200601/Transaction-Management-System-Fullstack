@@ -1,9 +1,5 @@
 import { z } from 'zod';
 
-import { ITEM_UNITS } from './types';
-
-const UNIT_VALUES = ITEM_UNITS.map((unit) => unit.value) as [string, ...string[]];
-
 /** "12.5" → 1250. Done on the digits, so no floating-point rounding creeps in. */
 function toMinorUnits(price: string) {
   const [whole, fraction = ''] = price.split('.');
@@ -32,7 +28,8 @@ export const itemFormSchema = z.object({
     .min(1, 'Enter the price')
     .regex(/^\d{1,9}(\.\d{1,2})?$/, 'Enter a price like 12.50')
     .transform(toMinorUnits),
-  unit: z.string().refine((value) => UNIT_VALUES.includes(value), 'Choose a unit'),
+  /** A unit's id, from GET /units. */
+  unitId: z.string().min(1, 'Choose a unit'),
 });
 
 export type ItemFormInput = z.input<typeof itemFormSchema>;
@@ -53,8 +50,8 @@ export const itemSearchSchema = z
   .object({
     itemCode: z.string().trim().toUpperCase().max(30, 'Keep the item code under 30 characters'),
     itemName: z.string().trim().max(120, 'Keep the item name under 120 characters'),
-    /** '' means any unit. */
-    unit: z.string(),
+    /** A unit's id; '' means any unit. */
+    unitId: z.string(),
     minPrice: optionalPrice,
     maxPrice: optionalPrice,
   })

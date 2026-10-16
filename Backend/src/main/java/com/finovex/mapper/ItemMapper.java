@@ -11,7 +11,7 @@ public final class ItemMapper {
 
 	public static ItemResponse toResponse(Item item) {
 		return new ItemResponse(String.valueOf(item.getItemSeq()), item.getItemCode(), item.getItemName(),
-				item.getDescription(), item.getPrice(), item.getUnit());
+				item.getDescription(), item.getPrice(), UnitMapper.toResponse(item.getUnit()));
 	}
 
 }

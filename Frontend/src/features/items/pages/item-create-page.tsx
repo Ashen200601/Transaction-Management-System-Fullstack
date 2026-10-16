@@ -4,22 +4,21 @@ import { useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
-import { NativeSelect } from '@/components/ui/native-select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/toast';
+import { UnitSelect } from '@/features/units/components/unit-select';
 import { createItem } from '@/lib/api';
 import { getErrorMessage, isApiError } from '@/lib/api/errors';
 import { apiFieldErrors, issuesToFieldErrors } from '@/lib/form-errors';
 
 import { itemFormSchema, type ItemFormInput } from '../schemas';
-import { ITEM_UNITS } from '../types';
 
 const EMPTY_FORM: ItemFormInput = {
   itemName: '',
   itemCode: '',
   description: '',
   price: '',
-  unit: '',
+  unitId: '',
 };
 
 export function ItemCreatePage() {
@@ -65,7 +64,7 @@ export function ItemCreatePage() {
             {(control) => (
               <Input
                 {...control}
-                className="h-12 text-base"
+                className="h-10"
                 placeholder="Espresso Beans 1kg"
                 value={values.itemName}
                 onChange={(event) => set('itemName', event.target.value)}
@@ -78,7 +77,7 @@ export function ItemCreatePage() {
             {(control) => (
               <Input
                 {...control}
-                className="h-12 text-base uppercase"
+                className="h-10 uppercase"
                 autoCapitalize="characters"
                 spellCheck={false}
                 placeholder="ESP-1KG"
@@ -93,8 +92,7 @@ export function ItemCreatePage() {
           {(control) => (
             <Textarea
               {...control}
-              rows={6}
-              className="text-base"
+              rows={4}
               placeholder="Single-origin beans, medium roast."
               value={values.description}
               onChange={(event) => set('description', event.target.value)}
@@ -107,7 +105,7 @@ export function ItemCreatePage() {
             {(control) => (
               <Input
                 {...control}
-                className="h-12 text-base"
+                className="h-10"
                 inputMode="decimal"
                 placeholder="0.00"
                 value={values.price}
@@ -116,23 +114,15 @@ export function ItemCreatePage() {
             )}
           </FormField>
 
-          <FormField label="Unit" error={errors.unit}>
+          <FormField label="Unit" error={errors.unitId}>
             {(control) => (
-              <NativeSelect
+              <UnitSelect
                 {...control}
-                className="h-12 text-base"
-                value={values.unit}
-                onChange={(event) => set('unit', event.target.value)}
-              >
-                <option value="" disabled>
-                  Choose a unit
-                </option>
-                {ITEM_UNITS.map((unit) => (
-                  <option key={unit.value} value={unit.value}>
-                    {unit.label}
-                  </option>
-                ))}
-              </NativeSelect>
+                className="h-10"
+                placeholder="Choose a unit"
+                value={values.unitId}
+                onChange={(event) => set('unitId', event.target.value)}
+              />
             )}
           </FormField>
         </div>

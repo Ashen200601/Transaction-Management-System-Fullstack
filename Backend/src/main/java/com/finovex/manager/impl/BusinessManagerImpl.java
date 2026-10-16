@@ -4,17 +4,25 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.finovex.config.BusinessProperties;
+import com.finovex.dto.response.BusinessResponse;
 import com.finovex.entity.Business;
 import com.finovex.entity.BusinessUser;
 import com.finovex.entity.User;
 import com.finovex.enums.BusinessRole;
 import com.finovex.enums.MasterDataStatus;
+import com.finovex.exception.ApiException;
+import com.finovex.exception.ErrorCode;
 import com.finovex.manager.BusinessManager;
+import com.finovex.mapper.BusinessMapper;
 import com.finovex.repository.BusinessRepository;
 import com.finovex.repository.BusinessUserRepository;
 
 @Service
 public class BusinessManagerImpl implements BusinessManager {
+
+	private static final Integer APPROVED = MasterDataStatus.APPROVED.getStatusSeq();
+
+	private static final Integer DELETED = MasterDataStatus.DELETED.getStatusSeq();
 
 	private final BusinessRepository businessRepository;
 
@@ -46,6 +54,24 @@ public class BusinessManagerImpl implements BusinessManager {
 		this.businessUserRepository.save(membership);
 
 		return business;
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Business activeBusinessOf(Integer userSeq) {
+		return this.businessUserRepository.findByUserSeqAndStatusNot(userSeq, DELETED)
+			.stream()
+			.filter((membership) -> APPROVED.equals(membership.getStatus()))
+			.map(BusinessUser::getBusiness)
+			.filter((business) -> APPROVED.equals(business.getStatus()))
+			.findFirst()
+			.orElseThrow(() -> new ApiException(ErrorCode.FORBIDDEN, "Your account isn't part of an active business."));
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public BusinessResponse current(Integer userSeq) {
+		return BusinessMapper.toResponse(activeBusinessOf(userSeq));
 	}
 
 }

@@ -4,8 +4,10 @@
 import { env } from '@/config/env';
 import type { SignupFormValues } from '@/features/auth/schemas';
 import type { AuthUser, LoginCredentials } from '@/features/auth/types';
+import type { Business } from '@/features/business/types';
 import type { ItemFormValues, ItemSearchValues } from '@/features/items/schemas';
 import type { Item } from '@/features/items/types';
+import type { Unit } from '@/features/units/types';
 
 import { createHttpClient, type HttpClientConfig } from './http-client';
 
@@ -73,6 +75,24 @@ export function refreshSession() {
 /** Ends the session on the server and deletes the refresh cookie. */
 export function signOut() {
   return authClient.post<void>('/auth/logout');
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Business                                                                                   */
+/* ------------------------------------------------------------------------------------------ */
+
+/** The business the signed-in user works in. */
+export function getCurrentBusiness() {
+  return apiClient.get<Business>('/businesses/current');
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Units                                                                                      */
+/* ------------------------------------------------------------------------------------------ */
+
+/** The units an item can be given, in list order. */
+export function listUnits() {
+  return apiClient.get<Unit[]>('/units');
 }
 
 /* ------------------------------------------------------------------------------------------ */

@@ -35,8 +35,8 @@ public final class ItemSpecifications {
 			if (hasText(search.itemName())) {
 				where.add(cb.like(cb.upper(root.get("itemName")), contains(search.itemName()), ESCAPE));
 			}
-			if (hasText(search.unit())) {
-				where.add(cb.equal(root.get("unit"), search.unit().trim().toUpperCase(Locale.ROOT)));
+			if (hasText(search.unitId())) {
+				where.add(cb.equal(root.get("unitSeq"), Integer.valueOf(search.unitId().trim())));
 			}
 			if (search.minPrice() != null) {
 				where.add(cb.greaterThanOrEqualTo(root.get("price"), search.minPrice()));

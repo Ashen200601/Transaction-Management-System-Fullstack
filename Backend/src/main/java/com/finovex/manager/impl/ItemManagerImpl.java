@@ -12,14 +12,15 @@ import com.finovex.dto.request.CreateItemRequest;
 import com.finovex.dto.request.ItemSearchRequest;
 import com.finovex.dto.response.ItemResponse;
 import com.finovex.entity.Business;
-import com.finovex.entity.BusinessUser;
 import com.finovex.entity.Item;
+import com.finovex.entity.Unit;
 import com.finovex.enums.MasterDataStatus;
 import com.finovex.exception.ApiException;
 import com.finovex.exception.ErrorCode;
+import com.finovex.manager.BusinessManager;
 import com.finovex.manager.ItemManager;
+import com.finovex.manager.UnitManager;
 import com.finovex.mapper.ItemMapper;
-import com.finovex.repository.BusinessUserRepository;
 import com.finovex.repository.ItemRepository;
 import com.finovex.repository.ItemSpecifications;
 
@@ -32,17 +33,21 @@ public class ItemManagerImpl implements ItemManager {
 
 	private final ItemRepository itemRepository;
 
-	private final BusinessUserRepository businessUserRepository;
+	private final BusinessManager businessManager;
 
-	public ItemManagerImpl(ItemRepository itemRepository, BusinessUserRepository businessUserRepository) {
+	private final UnitManager unitManager;
+
+	public ItemManagerImpl(ItemRepository itemRepository, BusinessManager businessManager,
+			UnitManager unitManager) {
 		this.itemRepository = itemRepository;
-		this.businessUserRepository = businessUserRepository;
+		this.businessManager = businessManager;
+		this.unitManager = unitManager;
 	}
 
 	@Override
 	@Transactional
 	public ItemResponse create(Integer userSeq, CreateItemRequest request) {
-		Business business = businessOf(userSeq);
+		Business business = this.businessManager.activeBusinessOf(userSeq);
 		String itemCode = request.itemCode().trim().toUpperCase(Locale.ROOT);
 
 		if (this.itemRepository.existsByBusinessSeqAndItemCodeIgnoreCaseAndStatusNot(business.getBusinessSeq(),
@@ -50,6 +55,7 @@ public class ItemManagerImpl implements ItemManager {
 			throw new ApiException(ErrorCode.CONFLICT, "Another item already uses this code.",
 					Map.of("itemCode", List.of("Another item already uses this code. Try another.")));
 		}
+		Unit unit = this.unitManager.usableUnit(request.unitId());
 
 		Item item = new Item();
 		item.setBusiness(business);
@@ -57,7 +63,7 @@ public class ItemManagerImpl implements ItemManager {
 		item.setItemName(request.itemName().trim());
 		item.setDescription(blankToNull(request.description()));
 		item.setPrice(request.price());
-		item.setUnit(request.unit());
+		item.setUnit(unit);
 		item.setStatus(APPROVED);
 		return ItemMapper.toResponse(this.itemRepository.save(item));
 	}
@@ -69,7 +75,7 @@ public class ItemManagerImpl implements ItemManager {
 			throw new ApiException(ErrorCode.VALIDATION_ERROR, "Some fields need attention.",
 					Map.of("maxPrice", List.of("Make this at least the lowest price")));
 		}
-		Business business = businessOf(userSeq);
+		Business business = this.businessManager.activeBusinessOf(userSeq);
 		return this.itemRepository
 			.findAll(ItemSpecifications.search(business.getBusinessSeq(), search), Sort.by("itemCode"))
 			.stream()
@@ -77,19 +83,6 @@ public class ItemManagerImpl implements ItemManager {
 			.toList();
 	}
 
-	/**
-	 * The user's business. Each user has one today (made at sign-up); when users can join several,
-	 * the frontend will say which one it means.
-	 */
-	private Business businessOf(Integer userSeq) {
-		return this.businessUserRepository.findByUserSeqAndStatusNot(userSeq, DELETED)
-			.stream()
-			.filter((membership) -> APPROVED.equals(membership.getStatus()))
-			.map(BusinessUser::getBusiness)
-			.filter((business) -> APPROVED.equals(business.getStatus()))
-			.findFirst()
-			.orElseThrow(() -> new ApiException(ErrorCode.FORBIDDEN, "Your account isn't part of an active business."));
-	}
 
 	private static String blankToNull(String value) {
 		return (value == null || value.isBlank()) ? null : value.trim();

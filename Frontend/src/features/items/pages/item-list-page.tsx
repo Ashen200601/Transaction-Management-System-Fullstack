@@ -6,24 +6,21 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/common/states
 import { Button, buttonVariants } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
-import { NativeSelect } from '@/components/ui/native-select';
 import { useToast } from '@/components/ui/toast';
+import { UnitSelect } from '@/features/units/components/unit-select';
+import { unitLabel } from '@/features/units/types';
 import { listItems } from '@/lib/api';
 import { getErrorMessage, isApiError } from '@/lib/api/errors';
 import { apiFieldErrors, issuesToFieldErrors } from '@/lib/form-errors';
 
 import { itemSearchSchema, type ItemSearchInput, type ItemSearchValues } from '../schemas';
-import { ITEM_UNITS, type Item } from '../types';
+import type { Item } from '../types';
 
-const EMPTY_SEARCH: ItemSearchInput = { itemCode: '', itemName: '', unit: '', minPrice: '', maxPrice: '' };
+const EMPTY_SEARCH: ItemSearchInput = { itemCode: '', itemName: '', unitId: '', minPrice: '', maxPrice: '' };
 
 /** 2550 → "25.50" */
 function formatPrice(cents: number) {
   return (cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-function unitLabel(unit: string) {
-  return ITEM_UNITS.find((option) => option.value === unit)?.label ?? unit;
 }
 
 function hasFilters(search: Partial<ItemSearchValues>) {
@@ -97,7 +94,7 @@ export function ItemListPage() {
             {(control) => (
               <Input
                 {...control}
-                className="h-11 uppercase placeholder:normal-case"
+                className="h-10 uppercase placeholder:normal-case"
                 autoCapitalize="characters"
                 spellCheck={false}
                 placeholder="Any code"
@@ -111,7 +108,7 @@ export function ItemListPage() {
             {(control) => (
               <Input
                 {...control}
-                className="h-11"
+                className="h-10"
                 placeholder="Any name"
                 value={values.itemName}
                 onChange={(event) => set('itemName', event.target.value)}
@@ -119,21 +116,16 @@ export function ItemListPage() {
             )}
           </FormField>
 
-          <FormField label="Unit" error={errors.unit}>
+          <FormField label="Unit" error={errors.unitId}>
             {(control) => (
-              <NativeSelect
+              <UnitSelect
                 {...control}
-                className="h-11"
-                value={values.unit}
-                onChange={(event) => set('unit', event.target.value)}
-              >
-                <option value="">Any unit</option>
-                {ITEM_UNITS.map((unit) => (
-                  <option key={unit.value} value={unit.value}>
-                    {unit.label}
-                  </option>
-                ))}
-              </NativeSelect>
+                className="h-10"
+                placeholder="Any unit"
+                placeholderSelectable
+                value={values.unitId}
+                onChange={(event) => set('unitId', event.target.value)}
+              />
             )}
           </FormField>
 
@@ -141,7 +133,7 @@ export function ItemListPage() {
             {(control) => (
               <Input
                 {...control}
-                className="h-11"
+                className="h-10"
                 inputMode="decimal"
                 placeholder="0.00"
                 value={values.minPrice}
@@ -154,7 +146,7 @@ export function ItemListPage() {
             {(control) => (
               <Input
                 {...control}
-                className="h-11"
+                className="h-10"
                 inputMode="decimal"
                 placeholder="No limit"
                 value={values.maxPrice}

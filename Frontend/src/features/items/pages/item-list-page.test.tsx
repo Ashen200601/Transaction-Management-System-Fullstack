@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
+import { UNITS } from '@/test/factories';
 import { server } from '@/test/server';
 import { renderWithProviders, screen, within } from '@/test/test-utils';
 
@@ -12,9 +13,9 @@ const beans = {
   itemName: 'Espresso Beans 1kg',
   description: 'Medium roast.',
   price: 2550,
-  unit: 'KG',
+  unit: UNITS[1],
 };
-const milk = { ...beans, id: '42', itemCode: 'MILK', itemName: 'Milk', description: null, price: 99, unit: 'L' };
+const milk = { ...beans, id: '42', itemCode: 'MILK', itemName: 'Milk', description: null, price: 99, unit: UNITS[2] };
 
 /** Answers GET /items with `reply` and records each request's query string. */
 function mockItems(reply: (query: URLSearchParams) => Response) {
@@ -34,6 +35,10 @@ function renderPage() {
 }
 
 describe('ItemListPage', () => {
+  beforeEach(() => {
+    server.use(http.get('*/units', () => HttpResponse.json(UNITS)));
+  });
+
   it('lists every item at first, with its code, name, unit and price', async () => {
     const queries = mockItems(() => HttpResponse.json([beans, milk]));
     renderPage();
@@ -66,13 +71,13 @@ describe('ItemListPage', () => {
 
     await user.type(screen.getByLabelText('Item code'), 'esp');
     await user.type(screen.getByLabelText('Item name'), ' beans ');
-    await user.selectOptions(screen.getByLabelText('Unit'), 'KG');
+    await user.selectOptions(screen.getByLabelText('Unit'), 'Kilogram (kg)');
     await user.type(screen.getByLabelText('Price from'), '10');
     await user.type(screen.getByLabelText('Price to'), '30.5');
     await user.click(screen.getByRole('button', { name: 'Search' }));
 
     expect(await screen.findByText('1 item matches your search')).toBeInTheDocument();
-    expect(queries.at(-1)).toEqual({ itemCode: 'ESP', itemName: 'beans', unit: 'KG', minPrice: '1000', maxPrice: '3050' });
+    expect(queries.at(-1)).toEqual({ itemCode: 'ESP', itemName: 'beans', unitId: '2', minPrice: '1000', maxPrice: '3050' });
   });
 
   it('leaves empty filters out of the request', async () => {

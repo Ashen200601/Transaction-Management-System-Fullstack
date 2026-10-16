@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
+import { UNITS } from '@/test/factories';
 import { server } from '@/test/server';
 import { renderWithProviders, screen } from '@/test/test-utils';
 
@@ -21,10 +22,15 @@ async function fillForm(user: ReturnType<typeof renderPage>['user']) {
     await user.click(screen.getByLabelText(label));
     await user.paste(value);
   }
-  await user.selectOptions(screen.getByLabelText('Unit'), 'KG');
+  await screen.findByRole('option', { name: 'Kilogram (kg)' });
+  await user.selectOptions(screen.getByLabelText('Unit'), 'Kilogram (kg)');
 }
 
 describe('ItemCreatePage', () => {
+  beforeEach(() => {
+    server.use(http.get('*/units', () => HttpResponse.json(UNITS)));
+  });
+
   it('points out what needs fixing without calling the API', async () => {
     const { user } = renderPage();
 
@@ -47,7 +53,7 @@ describe('ItemCreatePage', () => {
             itemName: 'Espresso Beans 1kg',
             description: 'Medium roast.',
             price: 2550,
-            unit: 'KG',
+            unit: UNITS[1],
           },
           { status: 201 },
         );
@@ -64,7 +70,7 @@ describe('ItemCreatePage', () => {
       itemCode: 'ESP-1KG',
       description: 'Medium roast.',
       price: 2550,
-      unit: 'KG',
+      unitId: '2',
     });
     expect(screen.getByLabelText('Item name')).toHaveValue('');
     expect(screen.getByLabelText('Unit')).toHaveValue('');
@@ -93,6 +99,45 @@ describe('ItemCreatePage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Another item already uses this code.');
     expect(screen.getByLabelText('Item code')).toHaveAccessibleDescription('Another item already uses this code. Try another.');
     expect(screen.getByLabelText('Item name')).toHaveValue('Espresso Beans 1kg');
+  });
+
+  it('lists the units from the server, by name and code', async () => {
+    renderPage();
+
+    expect(await screen.findByRole('option', { name: 'Kilogram (kg)' })).toHaveValue('2');
+    expect(screen.getByRole('option', { name: 'Box' })).toHaveValue('7');
+    expect(screen.getByRole('option', { name: 'Choose a unit' })).toBeDisabled();
+  });
+
+  it('says so in the unit list when the units fail to load', async () => {
+    server.use(http.get('*/units', () => HttpResponse.error()));
+    renderPage();
+
+    expect(await screen.findByRole('option', { name: "Couldn't load the units" })).toBeInTheDocument();
+  });
+
+  it('shows a unit the server turned down on the unit field', async () => {
+    server.use(
+      http.post('*/items', () =>
+        HttpResponse.json(
+          {
+            title: 'Validation failed',
+            status: 422,
+            code: 'VALIDATION_ERROR',
+            detail: 'Some fields need attention.',
+            errors: { unitId: ['Choose a unit'] },
+          },
+          { status: 422 },
+        ),
+      ),
+    );
+    const { user } = renderPage();
+
+    await fillForm(user);
+    await user.click(screen.getByRole('button', { name: 'Save item' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Some fields need attention.');
+    expect(screen.getByLabelText('Unit')).toHaveAccessibleDescription('Choose a unit');
   });
 
   it('shows other failures in a red toast', async () => {

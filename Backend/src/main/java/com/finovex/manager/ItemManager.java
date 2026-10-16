@@ -13,7 +13,7 @@ public interface ItemManager {
 	 * Creates an item in the signed-in user's business.
 	 * @param userSeq the signed-in user (the access token's subject)
 	 * @throws com.finovex.exception.ApiException CONFLICT if the business already uses the item code,
-	 * FORBIDDEN if the user doesn't belong to an active business
+	 * VALIDATION_ERROR if the unit isn't an approved one, FORBIDDEN if the user doesn't belong to an active business
 	 */
 	ItemResponse create(Integer userSeq, CreateItemRequest request);
 

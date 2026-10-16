@@ -16,6 +16,8 @@
   --color-destructive: var(--destructive);
   --color-success: var(--success);
   --color-warning: var(--warning);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
   /* Toasts slide in from the right and fade; on phones they drop in from the top. */
@@ -66,6 +68,9 @@
   --destructive: oklch(0.55 0.2 27);
   --success: oklch(0.52 0.13 152);
   --warning: oklch(0.62 0.14 70);
+  /* The module sidebar: dark blue with white text. */
+  --sidebar: oklch(0.29 0.085 255);
+  --sidebar-foreground: oklch(1 0 0);
 }
 
 @layer base {
