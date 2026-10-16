@@ -14,14 +14,41 @@ describe('AppLayout', () => {
     );
   });
 
-  it('lists every main module in the sidebar, with the current one marked', () => {
-    renderWithProviders(<AppLayout />, { route: '/items' });
+  it('lists every main module in the sidebar, with the current page marked', () => {
+    renderWithProviders(<AppLayout />, { route: '/inventory/items' });
 
     const nav = screen.getAllByRole('navigation', { name: 'Main' })[0];
-    const links = within(nav).getAllByRole('link');
-    expect(links.map((link) => link.textContent)).toEqual(APP_MODULES.map((module) => module.label));
+    const entries = within(nav)
+      .getAllByRole('listitem')
+      .filter((item) => item.parentElement?.parentElement === nav)
+      .map((item) => item.querySelector('a, button')?.textContent);
+    expect(entries).toEqual(APP_MODULES.map((module) => module.label));
     expect(within(nav).getByRole('link', { name: 'Items' })).toHaveAttribute('aria-current', 'page');
     expect(within(nav).getByRole('link', { name: 'Home' })).not.toHaveAttribute('aria-current');
+  });
+
+  it('opens Inventory on its submodules when the page is one of them', () => {
+    renderWithProviders(<AppLayout />, { route: '/inventory/grn' });
+
+    const nav = screen.getAllByRole('navigation', { name: 'Main' })[0];
+    expect(within(nav).getByRole('button', { name: 'Inventory' })).toHaveAttribute('aria-expanded', 'true');
+    expect(within(nav).getByRole('link', { name: 'Items' })).toHaveAttribute('href', '/inventory/items');
+    expect(within(nav).getByRole('link', { name: 'GRN' })).toHaveAttribute('aria-current', 'page');
+    expect(within(nav).getByRole('link', { name: 'GDN' })).toHaveAttribute('href', '/inventory/gdn');
+  });
+
+  it('keeps Inventory closed elsewhere until it is clicked', async () => {
+    const { user } = renderWithProviders(<AppLayout />, { route: '/' });
+
+    const nav = screen.getAllByRole('navigation', { name: 'Main' })[0];
+    const inventory = within(nav).getByRole('button', { name: 'Inventory' });
+    expect(inventory).toHaveAttribute('aria-expanded', 'false');
+    expect(within(nav).queryByRole('link', { name: 'GRN' })).not.toBeInTheDocument();
+
+    await user.click(inventory);
+
+    expect(inventory).toHaveAttribute('aria-expanded', 'true');
+    expect(within(nav).getByRole('link', { name: 'GRN' })).toBeInTheDocument();
   });
 
   it('puts the header bar above the page, with the business and the signed-in user', async () => {
@@ -39,7 +66,7 @@ describe('AppLayout', () => {
     const navs = screen.getAllByRole('navigation', { name: 'Main' });
     expect(navs).toHaveLength(2);
 
-    await user.click(within(navs[1]).getByRole('link', { name: 'Customers' }));
+    await user.click(within(navs[1]).getByRole('link', { name: 'Transactions' }));
     expect(screen.getAllByRole('navigation', { name: 'Main' })).toHaveLength(1);
   });
 });

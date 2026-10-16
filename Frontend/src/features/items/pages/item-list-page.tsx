@@ -190,7 +190,7 @@ export function ItemListPage() {
               title="No items yet"
               description="Items you create show up here."
               action={
-                <Link to="/items" className={buttonVariants()}>
+                <Link to="/inventory/items" className={buttonVariants()}>
                   <PlusCircle aria-hidden />
                   Create item
                 </Link>

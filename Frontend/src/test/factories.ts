@@ -1,4 +1,5 @@
 import type { AuthUser } from '@/features/auth/types';
+import type { StakeholderType } from '@/features/stakeholders/types';
 import type { Unit } from '@/features/units/types';
 
 // Test data builders. Each returns a complete, valid object and takes
@@ -20,4 +21,10 @@ export const UNITS: Unit[] = [
   { id: '2', unitCode: 'KG', unitName: 'Kilogram' },
   { id: '4', unitCode: 'L', unitName: 'Litre' },
   { id: '7', unitCode: 'BOX', unitName: 'Box' },
+];
+
+/** The seeded stakeholder types (GET /stakeholder-types). */
+export const STAKEHOLDER_TYPES: StakeholderType[] = [
+  { id: '1', stakeholderTypeCode: 'CUSTOMER', stakeholderTypeName: 'Customer' },
+  { id: '2', stakeholderTypeCode: 'VENDOR', stakeholderTypeName: 'Vendor' },
 ];

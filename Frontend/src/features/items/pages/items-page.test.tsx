@@ -8,7 +8,7 @@ import { ItemsPage } from './items-page';
 function renderAt(route: string) {
   return renderWithProviders(
     <Routes>
-      <Route path="/items" element={<ItemsPage />}>
+      <Route path="/inventory/items" element={<ItemsPage />}>
         <Route index element={<p>Create tab</p>} />
         <Route path="list" element={<p>List tab</p>} />
       </Route>
@@ -19,7 +19,7 @@ function renderAt(route: string) {
 
 describe('ItemsPage', () => {
   it('opens on the Create item tab', () => {
-    renderAt('/items');
+    renderAt('/inventory/items');
 
     expect(screen.getByRole('link', { name: 'Create item' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('link', { name: 'Item list' })).not.toHaveAttribute('aria-current');
@@ -27,7 +27,7 @@ describe('ItemsPage', () => {
   });
 
   it('switches to the Item list tab', async () => {
-    const { user } = renderAt('/items');
+    const { user } = renderAt('/inventory/items');
 
     await user.click(screen.getByRole('link', { name: 'Item list' }));
 

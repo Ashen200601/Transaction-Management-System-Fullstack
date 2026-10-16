@@ -7,6 +7,8 @@ import type { AuthUser, LoginCredentials } from '@/features/auth/types';
 import type { Business } from '@/features/business/types';
 import type { ItemFormValues, ItemSearchValues } from '@/features/items/schemas';
 import type { Item } from '@/features/items/types';
+import type { StakeholderFormValues, StakeholderSearchValues } from '@/features/stakeholders/schemas';
+import type { Stakeholder, StakeholderType } from '@/features/stakeholders/types';
 import type { Unit } from '@/features/units/types';
 
 import { createHttpClient, type HttpClientConfig } from './http-client';
@@ -107,4 +109,23 @@ export function createItem(values: ItemFormValues) {
 /** The signed-in user's business's items that match the filters, ordered by item code. No filters lists them all. */
 export function listItems(search: Partial<ItemSearchValues> = {}) {
   return apiClient.get<Item[]>('/items', { params: search });
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Stakeholders                                                                               */
+/* ------------------------------------------------------------------------------------------ */
+
+/** The types a stakeholder can be given (customer, vendor, ...), in list order. */
+export function listStakeholderTypes() {
+  return apiClient.get<StakeholderType[]>('/stakeholder-types');
+}
+
+/** Creates a stakeholder, with its types, in the signed-in user's business. */
+export function createStakeholder(values: StakeholderFormValues) {
+  return apiClient.post<Stakeholder>('/stakeholders', values);
+}
+
+/** The signed-in user's business's stakeholders that match the filters, ordered by code. No filters lists them all. */
+export function listStakeholders(search: Partial<StakeholderSearchValues> = {}) {
+  return apiClient.get<Stakeholder[]>('/stakeholders', { params: search });
 }

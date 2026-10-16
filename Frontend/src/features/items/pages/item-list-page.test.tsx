@@ -126,7 +126,7 @@ describe('ItemListPage', () => {
     renderPage();
 
     expect(await screen.findByText('No items yet')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Create item' })).toHaveAttribute('href', '/items');
+    expect(screen.getByRole('link', { name: 'Create item' })).toHaveAttribute('href', '/inventory/items');
   });
 
   it('shows the error in a red toast and loads again on retry', async () => {
